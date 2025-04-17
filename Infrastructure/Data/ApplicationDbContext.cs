@@ -1,12 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Domain.Entities;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 
 namespace Infrastructure.Data
 {
-    class ApplicationDbContext
+    public class ApplicationDbContext : IdentityDbContext<AppUser>
     {
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+            : base(options)
+        {
+        }
+
+        public DbSet<Company> Companies { get; set; } = null!;
+        public DbSet<SuperAdmin> SuperAdmins { get; set; } = null!;
+        public DbSet<Admin> Admins { get; set; } = null!;
+        public DbSet<Driver> Drivers { get; set; } = null!;
+        public DbSet<Passenger> Passengers { get; set; } = null!;
+
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
+            builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+        }
     }
 }
