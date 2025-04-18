@@ -13,11 +13,17 @@ namespace Presentation
 
             // Configure Swagger/OpenAPI using extension method
             builder.Services.AddSwaggerServices();
+            
+            // Configure CORS using extension method
+            builder.Services.AddCorsServices(builder.Configuration);
 
             var app = builder.Build();
 
             // Configure the Swagger middleware using extension method
             app.UseSwaggerMiddleware();
+            
+            // Use CORS middleware (should be before authentication)
+            app.UseCorsMiddleware();
 
             app.UseHttpsRedirection();
 
