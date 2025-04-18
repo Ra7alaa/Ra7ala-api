@@ -1,3 +1,4 @@
+using Presentation.Extensions;
 
 namespace Presentation
 {
@@ -10,16 +11,13 @@ namespace Presentation
             // Add services to the container.
             builder.Services.AddControllers();
 
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-            builder.Services.AddOpenApi();
+            // Configure Swagger/OpenAPI using extension method
+            builder.Services.AddSwaggerServices();
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.MapOpenApi();
-            }
+            // Configure the Swagger middleware using extension method
+            app.UseSwaggerMiddleware();
 
             app.UseHttpsRedirection();
 
