@@ -17,6 +17,9 @@ namespace Presentation
             // Configure CORS using extension method
             builder.Services.AddCorsServices(builder.Configuration);
 
+            // Configure Email services using extension method
+            builder.Services.AddEmailServices(builder.Configuration);
+            
             var app = builder.Build();
 
             // Configure the Swagger middleware using extension method
