@@ -20,6 +20,9 @@ namespace Presentation
             // Configure Email services using extension method
             builder.Services.AddEmailServices(builder.Configuration);
             
+            // Configure JWT services
+            builder.Services.AddJwtServices(builder.Configuration);
+
             var app = builder.Build();
 
             // Configure the Swagger middleware using extension method
@@ -29,7 +32,10 @@ namespace Presentation
             app.UseCorsMiddleware();
 
             app.UseHttpsRedirection();
-
+            
+            // Add authentication middleware
+            app.UseAuthentication();
+            
             app.UseAuthorization();
 
             app.MapControllers();
