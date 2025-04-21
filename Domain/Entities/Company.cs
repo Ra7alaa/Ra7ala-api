@@ -16,6 +16,7 @@ namespace Domain.Entities
 
         public string LogoUrl { get; set; } = string.Empty;
         public bool IsApproved { get; set; } = false;
+
         public bool IsRejected { get; set; } = false;
         public bool IsDeleted { get; set; } = false;
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
