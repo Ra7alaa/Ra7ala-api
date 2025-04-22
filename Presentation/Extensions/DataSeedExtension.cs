@@ -37,7 +37,6 @@ namespace Presentation.Extensions
                 catch (Exception ex)
                 {
                     logger.LogError(ex, "An error occurred during database seeding process");
-                    // We won't throw here to allow the application to start even if seeding fails
                 }
             }
             

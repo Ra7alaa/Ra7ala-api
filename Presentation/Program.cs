@@ -27,7 +27,7 @@ namespace Presentation
             builder.Services.AddJwtServices(builder.Configuration);
             
             // Configure Auth services
-            //builder.Services.AddAuthServices();
+            builder.Services.AddAuthServices();
             
             // Configure Data Seed services
             builder.Services.AddDataSeedServices();

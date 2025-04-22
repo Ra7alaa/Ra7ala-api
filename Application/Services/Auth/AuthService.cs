@@ -1,19 +1,17 @@
 using Application.DTOs.Auth;
+using Application.Models;
 using Application.Services.Interfaces;
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.AspNetCore.Identity;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Application.Services
 {
-    public class AuthService //: IAuthService
+    public class AuthService : IAuthService
     {
         private readonly UserManager<AppUser> _userManager;
         private readonly IJwtService _jwtService;
-        private readonly IEmailService _emailService; 
+        private readonly IEmailService _emailService;
 
         public AuthService(
             UserManager<AppUser> userManager,
@@ -25,127 +23,102 @@ namespace Application.Services
             _emailService = emailService;
         }
 
-        // public async Task<AuthResponseDto> LoginAsync(LoginDto loginDto)
-        // {
-        //     // Find user by email or username
-        //     var user = await _userManager.FindByEmailAsync(loginDto.EmailOrUsername) 
-        //         ?? await _userManager.FindByNameAsync(loginDto.EmailOrUsername);
+        public async Task<ServiceResult<AuthResponseDto>> LoginAsync(LoginDto loginDto)
+        {
+            var user = await _userManager.FindByEmailAsync(loginDto.EmailOrUsername)
+                ?? await _userManager.FindByNameAsync(loginDto.EmailOrUsername);
 
-        //     if (user == null)
-        //         throw new Exception("Invalid credentials");
+            if (user == null || !await _userManager.CheckPasswordAsync(user, loginDto.Password))
+                return ServiceResult<AuthResponseDto>.Failure("Invalid username or password.");
 
-        //     // Validate password
-        //     if (!await _userManager.CheckPasswordAsync(user, loginDto.Password))
-        //         throw new Exception("Invalid credentials");
+            var token = await _jwtService.GenerateTokenAsync(user);
+            
+            user.LastLogin = DateTime.UtcNow;
+            await _userManager.UpdateAsync(user);
 
-        //     // Generate JWT token
-        //     var token = await _jwtService.GenerateTokenAsync(user);
+            return ServiceResult<AuthResponseDto>.Success(new AuthResponseDto
+            {
+                Token = token,
+                Id = user.Id,
+                Email = user.Email!,
+                Username = user.UserName!,
+                FullName = user.FullName,
+                UserType = user.UserType.ToString()
+            });
+        }
 
-        //     // Return response with token and user info
-        //     return new AuthResponseDto
-        //     {
-        //         Token = token,
-        //         Id = user.Id,
-        //         Email = user.Email!,
-        //         Username = user.UserName!,
-        //         FullName = user.FullName,
-        //         UserType = user.UserType.ToString()
-        //     };
-        // }
+        public async Task<ServiceResult<AuthResponseDto>> RegisterPassengerAsync(PassengerRegistrationDto model)
+        {
+            if (await _userManager.FindByEmailAsync(model.Email) != null)
+                return ServiceResult<AuthResponseDto>.Failure("Email is already taken.");
 
-        // public async Task<AuthResponseDto> RegisterPassengerAsync(PassengerRegistrationDto model)
-        // {
-        //     // Check if email already exists
-        //     if (await _userManager.FindByEmailAsync(model.Email) != null)
-        //         throw new Exception("Email is already taken");
+            if (await _userManager.FindByNameAsync(model.Username) != null)
+                return ServiceResult<AuthResponseDto>.Failure("Username is already taken.");
 
-        //     // Check if username already exists
-        //     if (await _userManager.FindByNameAsync(model.Username) != null)
-        //         throw new Exception("Username is already taken");
+            var user = new AppUser
+            {
+                UserName = model.Username,
+                Email = model.Email,
+                PhoneNumber = model.PhoneNumber,
+                FullName = model.FullName,
+                Address = model.Address,
+                DateOfBirth = model.DateOfBirth,
+                ProfilePictureUrl = model.ProfilePictureUrl,
+                UserType = UserType.Passenger,
+                DateCreated = DateTime.UtcNow
+            };
 
-        //     // Create AppUser with UserType = Passenger
-        //     var user = new AppUser
-        //     {
-        //         UserName = model.Username,
-        //         Email = model.Email,
-        //         PhoneNumber = model.PhoneNumber,
-        //         FullName = model.FullName,
-        //         Address = model.Address,
-        //         DateOfBirth = model.DateOfBirth,
-        //         ProfilePictureUrl = model.ProfilePictureUrl,
-        //         UserType = UserType.Passenger,
-        //         DateCreated = DateTime.UtcNow
-        //     };
+            var result = await _userManager.CreateAsync(user, model.Password);
+            if (!result.Succeeded)
+                return ServiceResult<AuthResponseDto>.Failure(result.Errors.Select(e => e.Description).ToList());
 
-        //     // Create user with password
-        //     var result = await _userManager.CreateAsync(user, model.Password);
-        //     if (!result.Succeeded)
-        //     {
-        //         var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-        //         throw new Exception($"Failed to create user: {errors}");
-        //     }
+            await _userManager.AddToRoleAsync(user, "Passenger");
+            
+            var token = await _jwtService.GenerateTokenAsync(user);
 
-        //     // Add to Passenger role if you're using roles
-        //     await _userManager.AddToRoleAsync(user, "Passenger");
+            return ServiceResult<AuthResponseDto>.Success(new AuthResponseDto
+            {
+                Token = token,
+                Id = user.Id,
+                Email = user.Email!,
+                Username = user.UserName!,
+                FullName = user.FullName,
+                UserType = user.UserType.ToString()
+            });
+        }
 
-        //     // Create associated Passenger profile (1:1)
-        //     var passenger = new Passenger
-        //     {
-        //         Id = user.Id,
-        //         AppUser = user
-        //     };
+        public async Task<ServiceResult> ForgotPasswordAsync(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return ServiceResult.Success();
+            }
 
-        //     // Generate JWT token
-        //     var token = await _jwtService.GenerateTokenAsync(user);
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
 
-        //     // Return response with token and user info
-        //     return new AuthResponseDto
-        //     {
-        //         Token = token,
-        //         Id = user.Id,
-        //         Email = user.Email!,
-        //         Username = user.UserName!,
-        //         FullName = user.FullName,
-        //         UserType = user.UserType.ToString()
-        //     };
-        // }
+            try
+            {
+                await _emailService.SendPasswordResetEmailAsync(email, user.UserName!, token);
+                return ServiceResult.Success();
+            }
+            catch (Exception)
+            {
+                return ServiceResult.Failure("Failed to send password reset email. Please try again later.");
+            }
+        }
 
-        // public async Task<bool> ForgotPasswordAsync(string email)
-        // {
-        //     var user = await _userManager.FindByEmailAsync(email);
-        //     if (user == null)
-        //     {
-        //         // Don't reveal that the user does not exist
-        //         return true;
-        //     }
+        public async Task<ServiceResult> ResetPasswordAsync(ResetPasswordDto resetPasswordDto)
+        {
+            var user = await _userManager.FindByEmailAsync(resetPasswordDto.Email);
+            if (user == null)
+                return ServiceResult.Failure("Password reset failed.");
 
-        //     // Generate password reset token
-        //     var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-
-        //     // Send email with reset token
-        //     await _emailService.SendPasswordResetEmailAsync(
-        //         email, 
-        //         user.UserName!, 
-        //         token
-        //     );
-
-        //     return true;
-        // }
-
-        // public async Task<bool> ResetPasswordAsync(ResetPasswordDto resetPasswordDto)
-        // {
-        //     var user = await _userManager.FindByEmailAsync(resetPasswordDto.Email);
-        //     if (user == null)
-        //     {
-        //         // Don't reveal that the user does not exist
-        //         throw new Exception("Password reset failed");
-        //     }
-
-        //     var result = await _userManager.ResetPasswordAsync(user, resetPasswordDto.Token, resetPasswordDto.NewPassword);
-        //     if (!result.Succeeded)
-        //         throw new Exception("Password reset failed");
-
-        //     return true;
-        // }
+            var result = await _userManager.ResetPasswordAsync(user, resetPasswordDto.Token, resetPasswordDto.NewPassword);
+            
+            return result.Succeeded 
+                ? ServiceResult.Success() 
+                : ServiceResult.Failure(result.Errors.Select(e => e.Description).ToList());
+        }
     }
 }
