@@ -30,11 +30,6 @@ namespace Infrastructure.Repositories
             return await _dbSet.FindAsync(id);
         }
 
-        public async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> expression)
-        {
-            return await _dbSet.Where(expression).ToListAsync();
-        }
-
         public async Task AddAsync(T entity)
         {
             await _dbSet.AddAsync(entity);
