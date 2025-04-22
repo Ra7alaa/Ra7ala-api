@@ -6,7 +6,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Infrastructure.Data.DataSeed
@@ -54,6 +56,8 @@ namespace Infrastructure.Data.DataSeed
                 await SeedAdminsAsync(adminPassword);
                 await SeedDriversAsync(driverPassword);
                 await SeedPassengersAsync(passengerPassword);
+                await SeedCitiesAsync();
+                await SeedStationsAsync();
                 
                 _logger.LogInformation("Database seeding completed successfully!");
             }
@@ -513,6 +517,264 @@ namespace Infrastructure.Data.DataSeed
             {
                 _logger.LogInformation("Passengers already exist, skipping passenger seed");
             }
+        }
+
+        private async Task SeedCitiesAsync()
+        {
+            _logger.LogInformation("Seeding cities...");
+            
+            if (!await _context.Cities.AnyAsync())
+            {
+                _logger.LogInformation("Creating cities from JSON data");
+                
+                try
+                {
+                    // مسار ملف JSON الذي يحتوي على بيانات المدن
+                    string jsonFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Infrastructure", "Data", "DataSeed", "Cities.json");
+                    
+                    // إذا لم يتم العثور على الملف في مسار التشغيل، حاول العثور عليه في مسار المشروع
+                    if (!File.Exists(jsonFilePath))
+                    {
+                        // البحث عن الملف في مسارات أخرى محتملة
+                        string[] possiblePaths = new string[]
+                        {
+                            // مسار المشروع
+                            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Cities.json"),
+                            // مسار نسبي من مكان تشغيل التطبيق
+                            Path.Combine("Data", "DataSeed", "Cities.json"),
+                            // المسار المطلق للملف
+                            @"e:\iti files\Grud project\Ra7ala-api\Infrastructure\Data\DataSeed\Cities.json"
+                        };
+
+                        foreach (var path in possiblePaths)
+                        {
+                            if (File.Exists(path))
+                            {
+                                jsonFilePath = path;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    _logger.LogInformation("Reading cities from file: {FilePath}", jsonFilePath);
+                    
+                    if (File.Exists(jsonFilePath))
+                    {
+                        string jsonData = await File.ReadAllTextAsync(jsonFilePath);
+                        _logger.LogInformation("JSON content: {JsonData}", jsonData.Substring(0, Math.Min(100, jsonData.Length)) + "...");
+                        
+                        var citiesData = JsonSerializer.Deserialize<List<CityData>>(jsonData, new JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true
+                        });
+                        
+                        if (citiesData != null && citiesData.Any())
+                        {
+                            // No establecemos el Id manualmente, dejamos que la base de datos lo haga
+                            var cities = citiesData.Select(c => new City
+                            {
+                                // Quitamos la asignación de Id
+                                Name = c.Name,
+                                Governorate = c.Governorate,
+                                IsDeleted = false
+                            }).ToList();
+                            
+                            _logger.LogInformation("Adding {Count} cities to the database", cities.Count);
+                            
+                            // تفريغ جدول المدن أولاً للتأكد من عدم وجود تعارضات
+                            var existingCities = await _context.Cities.ToListAsync();
+                            if (existingCities.Any())
+                            {
+                                _context.Cities.RemoveRange(existingCities);
+                                await _context.SaveChangesAsync();
+                            }
+                            
+                            await _context.Cities.AddRangeAsync(cities);
+                            await _context.SaveChangesAsync();
+                            
+                            _logger.LogInformation("Successfully seeded {Count} cities", cities.Count);
+                            
+                            // التحقق من عدد المدن في قاعدة البيانات بعد عملية البذر
+                            var citiesCount = await _context.Cities.CountAsync();
+                            _logger.LogInformation("Total cities in database after seeding: {Count}", citiesCount);
+                        }
+                        else
+                        {
+                            _logger.LogWarning("No city data found in the JSON file");
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Cities JSON file not found at: {FilePath}", jsonFilePath);
+                        
+                        // إذا لم يتم العثور على ملف JSON، أضف المدن مباشرة في الكود
+                        _logger.LogInformation("Adding hardcoded cities as fallback");
+                        
+                        var hardcodedCities = new List<City>
+                        {
+                            // No establecemos el Id manualmente
+                            new City { Name = "Cairo", Governorate = "Cairo", IsDeleted = false },
+                            new City { Name = "Alexandria", Governorate = "Alexandria", IsDeleted = false },
+                            new City { Name = "Giza", Governorate = "Giza", IsDeleted = false },
+                            new City { Name = "Luxor", Governorate = "Luxor", IsDeleted = false },
+                            new City { Name = "Aswan", Governorate = "Aswan", IsDeleted = false },
+                            new City { Name = "Mansoura", Governorate = "Dakahlia", IsDeleted = false },
+                            new City { Name = "Zagazig", Governorate = "Sharqia", IsDeleted = false },
+                            new City { Name = "Tanta", Governorate = "Gharbia", IsDeleted = false },
+                            new City { Name = "Port Said", Governorate = "Port Said", IsDeleted = false },
+                            new City { Name = "Suez", Governorate = "Suez", IsDeleted = false },
+                            new City { Name = "Ismailia", Governorate = "Ismailia", IsDeleted = false },
+                            new City { Name = "Damietta", Governorate = "Damietta", IsDeleted = false },
+                            new City { Name = "El Mahalla El Kubra", Governorate = "Gharbia", IsDeleted = false },
+                            new City { Name = "Kafr El Sheikh", Governorate = "Kafr El Sheikh", IsDeleted = false },
+                            new City { Name = "Fayoum", Governorate = "Fayoum", IsDeleted = false },
+                            new City { Name = "Minya", Governorate = "Minya", IsDeleted = false },
+                            new City { Name = "Beni Suef", Governorate = "Beni Suef", IsDeleted = false },
+                            new City { Name = "Hurghada", Governorate = "Red Sea", IsDeleted = false },
+                            new City { Name = "Sharm El Sheikh", Governorate = "South Sinai", IsDeleted = false },
+                            new City { Name = "Dahab", Governorate = "South Sinai", IsDeleted = false },
+                            new City { Name = "Taba", Governorate = "South Sinai", IsDeleted = false },
+                            new City { Name = "Safaga", Governorate = "Red Sea", IsDeleted = false },
+                            new City { Name = "El Gouna", Governorate = "Red Sea", IsDeleted = false }
+                        };
+                        
+                        await _context.Cities.AddRangeAsync(hardcodedCities);
+                        await _context.SaveChangesAsync();
+                        
+                        _logger.LogInformation("Successfully seeded {Count} hardcoded cities", hardcodedCities.Count);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error seeding cities from JSON file");
+                }
+            }
+            else
+            {
+                var citiesCount = await _context.Cities.CountAsync();
+                _logger.LogInformation("Cities already exist ({Count} records), skipping city seed", citiesCount);
+            }
+        }
+
+        private async Task SeedStationsAsync()
+        {
+            _logger.LogInformation("Seeding stations...");
+            
+            if (!await _context.Stations.AnyAsync())
+            {
+                _logger.LogInformation("Creating stations from JSON data");
+                
+                try
+                {
+                    // مسار ملف JSON الذي يحتوي على بيانات المحطات
+                    string jsonFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Infrastructure", "Data", "DataSeed", "Stations.json");
+                    
+                    // إذا لم يتم العثور على الملف في مسار التشغيل، حاول العثور عليه في مسار المشروع
+                    if (!File.Exists(jsonFilePath))
+                    {
+                        // البحث عن الملف في مسارات أخرى محتملة
+                        string[] possiblePaths = new string[]
+                        {
+                            // مسار المشروع
+                            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Stations.json"),
+                            // مسار نسبي من مكان تشغيل التطبيق
+                            Path.Combine("Data", "DataSeed", "Stations.json"),
+                            // المسار المطلق للملف
+                            @"e:\iti files\Grud project\Ra7ala-api\Infrastructure\Data\DataSeed\Stations.json"
+                        };
+
+                        foreach (var path in possiblePaths)
+                        {
+                            if (File.Exists(path))
+                            {
+                                jsonFilePath = path;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    _logger.LogInformation("Reading stations from file: {FilePath}", jsonFilePath);
+                    
+                    if (File.Exists(jsonFilePath))
+                    {
+                        string jsonData = await File.ReadAllTextAsync(jsonFilePath);
+                        _logger.LogInformation("JSON content: {JsonData}", jsonData.Substring(0, Math.Min(100, jsonData.Length)) + "...");
+                        
+                        var stationsData = JsonSerializer.Deserialize<List<StationData>>(jsonData, new JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true
+                        });
+                        
+                        if (stationsData != null && stationsData.Any())
+                        {
+                            // No establecemos el Id manualmente, dejamos que la base de datos lo haga
+                            var stations = stationsData.Select(s => new Station
+                            {
+                                // No asignamos StationId ya que es una columna identity
+                                Name = s.Name,
+                                CityId = s.CityId,
+                                Latitude = s.Latitude.ToString(),
+                                Longitude = s.Longitude.ToString(),
+                                CompanyId = s.CompanyId > 0 ? s.CompanyId : null,
+                                IsDeleted = false
+                            }).ToList();
+                            
+                            _logger.LogInformation("Adding {Count} stations to the database", stations.Count);
+                            
+                            // تفريغ جدول المحطات أولاً للتأكد من عدم وجود تعارضات
+                            var existingStations = await _context.Stations.ToListAsync();
+                            if (existingStations.Any())
+                            {
+                                _context.Stations.RemoveRange(existingStations);
+                                await _context.SaveChangesAsync();
+                            }
+                            
+                            await _context.Stations.AddRangeAsync(stations);
+                            await _context.SaveChangesAsync();
+                            
+                            _logger.LogInformation("Successfully seeded {Count} stations", stations.Count);
+                            
+                            // التحقق من عدد المحطات في قاعدة البيانات بعد عملية البذر
+                            var stationsCount = await _context.Stations.CountAsync();
+                            _logger.LogInformation("Total stations in database after seeding: {Count}", stationsCount);
+                        }
+                        else
+                        {
+                            _logger.LogWarning("No station data found in the JSON file");
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Stations JSON file not found at: {FilePath}", jsonFilePath);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error seeding stations from JSON file");
+                }
+            }
+            else
+            {
+                var stationsCount = await _context.Stations.CountAsync();
+                _logger.LogInformation("Stations already exist ({Count} records), skipping station seed", stationsCount);
+            }
+        }
+        
+        private class CityData
+        {
+            public int CityId { get; set; }
+            public string Name { get; set; } = string.Empty;
+            public string Governorate { get; set; } = string.Empty;
+        }
+
+        private class StationData
+        {
+            public int StationId { get; set; }
+            public string Name { get; set; } = string.Empty;
+            public int CityId { get; set; }
+            public double Latitude { get; set; }
+            public double Longitude { get; set; }
+            public int CompanyId { get; set; }
         }
     }
 }

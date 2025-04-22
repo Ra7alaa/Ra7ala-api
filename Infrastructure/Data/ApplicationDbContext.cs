@@ -17,6 +17,8 @@ namespace Infrastructure.Data
         public DbSet<Admin> Admins { get; set; } = null!;
         public DbSet<Driver> Drivers { get; set; } = null!;
         public DbSet<Passenger> Passengers { get; set; } = null!;
+        public DbSet<City> Cities { get; set; } = null!;
+        public DbSet<Station> Stations { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

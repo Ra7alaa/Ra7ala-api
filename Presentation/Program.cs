@@ -26,8 +26,14 @@ namespace Presentation
             // Configure JWT services
             builder.Services.AddJwtServices(builder.Configuration);
             
+            // Configure City services
+            builder.Services.AddCityServices();
+
             // Configure Auth services
             builder.Services.AddAuthServices();
+            
+            // Configure Repository services
+            builder.Services.AddRepositoryServices();
             
             // Configure Data Seed services
             builder.Services.AddDataSeedServices();
