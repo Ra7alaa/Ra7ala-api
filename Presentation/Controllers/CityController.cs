@@ -64,6 +64,8 @@ namespace Presentation.Controllers
             return Ok();
         }
 
+        // Add other actions as needed
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetCityById(int id)
         {
