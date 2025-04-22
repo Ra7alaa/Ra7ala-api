@@ -8,11 +8,15 @@ namespace Domain.Entities
         public string Phone { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public string SuperAdminName { get; set; } = string.Empty;
-        public string SuperAdminPhone { get; set; } = string.Empty;
-        public string SuperAdminEmail { get; set; } = string.Empty;
+
+        // // Super Admin details
+        // public string SuperAdminName { get; set; } = string.Empty;
+        // public string SuperAdminPhone { get; set; } = string.Empty;
+        // public string SuperAdminPhone { get; set; } = string.Empty;
+
         public string LogoUrl { get; set; } = string.Empty;
         public bool IsApproved { get; set; } = false;
+
         public bool IsRejected { get; set; } = false;
         public bool IsDeleted { get; set; } = false;
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
