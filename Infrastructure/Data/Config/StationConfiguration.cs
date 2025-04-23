@@ -10,6 +10,13 @@ namespace Infrastructure.Data.Config
         {
             builder.HasKey(s => s.Id);
             
+            // Set precision for decimal properties
+            builder.Property(s => s.Latitude)
+                   .HasPrecision(18, 9); // 9 decimal places for GPS coordinates
+            
+            builder.Property(s => s.Longitude)
+                   .HasPrecision(18, 9); // 9 decimal places for GPS coordinates
+            
             // Configure one-to-many relationship with City
             builder.HasOne(s => s.City)
                    .WithMany(c => c.Stations)
@@ -23,8 +30,6 @@ namespace Infrastructure.Data.Config
                    .HasForeignKey(s => s.CompanyId)
                    .IsRequired(false)
                    .OnDelete(DeleteBehavior.SetNull);
-            
-
         }
     }
 }

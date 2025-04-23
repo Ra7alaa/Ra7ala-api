@@ -24,6 +24,17 @@ namespace Presentation.Controllers
             return Ok(cities);
         }
 
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetCityById(int id)
+        {
+            var city = await _cityService.GetCityByIdAsync(id);
+            if (city == null)
+            {
+                return NotFound();
+            }
+            return Ok(city);
+        }
+
         [HttpPost]
         public async Task<IActionResult> AddCity([FromBody] CityDto cityDto)
         {
@@ -62,19 +73,6 @@ namespace Presentation.Controllers
             }
             
             return Ok();
-        }
-
-        // Add other actions as needed
-
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetCityById(int id)
-        {
-            var city = await _cityService.GetCityByIdAsync(id);
-            if (city == null)
-            {
-                return NotFound();
-            }
-            return Ok(city);
         }
     }
 }
