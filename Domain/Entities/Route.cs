@@ -26,6 +26,6 @@ namespace Domain.Entities
         // Navigation properties
         public virtual Company Company { get; set; }
         // public virtual ICollection<RouteStation> Stations { get; set; }
-        public virtual ICollection<Trip> Trips { get; set; }
+        // public virtual ICollection<Trip> Trips { get; set; }
     }
 }

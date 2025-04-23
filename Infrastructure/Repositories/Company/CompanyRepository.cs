@@ -1,0 +1,126 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Threading.Tasks;
+using Domain.Entities;
+using Domain.Repositories.Interfaces;
+using Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Company = Domain.Entities.Company;
+
+namespace Infrastructure.Repositories.Company
+{
+    public class CompanyRepository : GenericRepository<Domain.Entities.Company>, ICompanyRepository
+    {
+        private readonly ApplicationDbContext _context;
+
+        public CompanyRepository(ApplicationDbContext context) : base(context)
+        {
+            _context = context;
+        }
+
+        public async Task<bool> ExistsAsync(string name, string email)
+        {
+            return await _context.Set<Domain.Entities.Company>()
+                .AnyAsync(c => c.Name == name || c.Email == email);
+        }
+
+        public async Task<double> GetAverageRatingAsync(int companyId)
+        {
+            var feedbacks = await _context.Set<CompanyFeedback>()
+                .Where(f => f.CompanyId == companyId)
+                .ToListAsync();
+
+            if (!feedbacks.Any())
+                return 0;
+                
+            return feedbacks.Average(f => f.Rating);
+        }
+
+                // .Include(c => c.Trips)
+        public async Task<Domain.Entities.Company> GetCompanyWithDetailsAsync(int id)
+        {
+            return await _context.Set<Domain.Entities.Company>()
+                .Include(c => c.Admins)
+                .Include(c => c.Drivers)
+                .Include(c => c.Buses)
+                .Include(c => c.Routes)
+                .Include(c => c.SuperAdmin)
+                .FirstOrDefaultAsync(c => c.Id == id);
+        }
+
+        public async Task<Domain.Entities.Company?> GetCompanyWithRatingsAsync(int id)
+        {
+            return await _context.Set<Domain.Entities.Company>()
+                .Include(c => c.Feedbacks)
+                    .ThenInclude(f => f.Passenger)
+                .FirstOrDefaultAsync(c => c.Id == id);
+        }
+
+        public async Task<(IEnumerable<Domain.Entities.Company> Companies, int TotalCount)> GetPagedCompaniesAsync(
+            int pageNumber, 
+            int pageSize, 
+            Expression<Func<Domain.Entities.Company, bool>>? filter = null)
+        {
+            var query = _context.Set<Domain.Entities.Company>().AsQueryable();
+
+            if (filter != null)
+                query = query.Where(filter);
+
+            var totalCount = await query.CountAsync();
+            
+            var companies = await query
+                .OrderByDescending(c => c.CreatedDate)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (companies, totalCount);
+        }
+
+        public async Task<List<Domain.Entities.Company>> GetPendingCompaniesAsync()
+        {
+            return await _context.Set<Domain.Entities.Company>()
+                .Where(c => !c.IsApproved && !c.IsRejected && !c.IsDeleted)
+                .OrderByDescending(c => c.CreatedDate)
+                .ToListAsync();
+        }
+
+        public async Task<bool> UpdateCompanyRatingAsync(int companyId, double newRating)
+        {
+            var company = await _context.Set<Domain.Entities.Company>()
+                .FirstOrDefaultAsync(c => c.Id == companyId);
+
+            if (company == null)
+                return false;
+
+            company.AverageRating = newRating;
+            company.TotalRatings = await _context.Set<CompanyFeedback>()
+                .CountAsync(f => f.CompanyId == companyId);
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> UpdateCompanyStatusAsync(int id, bool isApproved, string? rejectionReason = null)
+        {
+            var company = await _context.Set<Domain.Entities.Company>()
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (company == null)
+                return false;
+
+            company.IsApproved = isApproved;
+            company.IsRejected = !isApproved;
+            
+            if (isApproved)
+                company.ApprovedDate = DateTime.UtcNow;
+            else if (rejectionReason != null)
+                company.RejectionReason = rejectionReason;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+    }
+}

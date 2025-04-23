@@ -54,7 +54,7 @@ namespace Infrastructure.Data.DataSeed
                 await SeedAdminsAsync(adminPassword);
                 await SeedDriversAsync(driverPassword);
                 await SeedPassengersAsync(passengerPassword);
-                
+
                 _logger.LogInformation("Database seeding completed successfully!");
             }
             catch (Exception ex)
@@ -123,69 +123,91 @@ namespace Infrastructure.Data.DataSeed
             {
                 _logger.LogInformation("Creating 5 companies");
                 
-                var companies = new List<Company>
-                {
-                    new Company
-                    {
-                        Name = "Cairo Transit",
-                        Email = "info@cairotransit.com",
-                        Phone = "+20223456789",
-                        Address = "10 Ramses Square, Cairo",
-                        Description = "Leading transportation company in Cairo",
-                        LogoUrl = "cairo_transit_logo.png",
-                        IsApproved = true,
-                        CreatedDate = DateTime.UtcNow.AddMonths(-6),
-                        ApprovedDate = DateTime.UtcNow.AddMonths(-6).AddDays(3)
-                    },
-                    new Company
-                    {
-                        Name = "Alexandria Rides",
-                        Email = "contact@alexrides.com",
-                        Phone = "+20345678912",
-                        Address = "15 Corniche Road, Alexandria",
-                        Description = "Premium transportation in Alexandria",
-                        LogoUrl = "alex_rides_logo.png",
-                        IsApproved = true,
-                        CreatedDate = DateTime.UtcNow.AddMonths(-5),
-                        ApprovedDate = DateTime.UtcNow.AddMonths(-5).AddDays(2)
-                    },
-                    new Company
-                    {
-                        Name = "Delta Transport",
-                        Email = "info@deltatransport.com",
-                        Phone = "+20456789123",
-                        Address = "22 El-Nasr Street, Mansoura",
-                        Description = "Serving the Delta region with quality transportation",
-                        LogoUrl = "delta_transport_logo.png",
-                        IsApproved = true,
-                        CreatedDate = DateTime.UtcNow.AddMonths(-4),
-                        ApprovedDate = DateTime.UtcNow.AddMonths(-4).AddDays(5)
-                    },
-                    new Company
-                    {
-                        Name = "Luxor Travels",
-                        Email = "support@luxortravels.com",
-                        Phone = "+20567891234",
-                        Address = "5 Karnak Temple Road, Luxor",
-                        Description = "Tourist transportation in Upper Egypt",
-                        LogoUrl = "luxor_travels_logo.png",
-                        IsApproved = true,
-                        CreatedDate = DateTime.UtcNow.AddMonths(-3),
-                        ApprovedDate = DateTime.UtcNow.AddMonths(-3).AddDays(4)
-                    },
-                    new Company
-                    {
-                        Name = "Red Sea Mobility",
-                        Email = "info@redseamobility.com",
-                        Phone = "+20678912345",
-                        Address = "30 El-Salam Road, Hurghada",
-                        Description = "Transportation solutions in Red Sea resorts",
-                        LogoUrl = "red_sea_mobility_logo.png",
-                        IsApproved = true,
-                        CreatedDate = DateTime.UtcNow.AddMonths(-2),
-                        ApprovedDate = DateTime.UtcNow.AddMonths(-2).AddDays(3)
-                    }
-                };
+                
+                // In SeedCompaniesWithSuperAdminsAsync method
+var companies = new List<Company>
+{
+    new Company
+    {
+        Name = "Cairo Transit",
+        Email = "info@cairotransit.com",
+        Phone = "+20223456789",
+        Address = "10 Ramses Square, Cairo",
+        Description = "Leading transportation company in Cairo",
+        LogoUrl = "cairo_transit_logo.png",
+        IsApproved = true,
+        IsRejected = false,
+        RejectionReason = string.Empty,
+        CreatedDate = DateTime.UtcNow.AddMonths(-6),
+        ApprovedDate = DateTime.UtcNow.AddMonths(-6).AddDays(3),
+        AverageRating = 4.5,
+        TotalRatings = 150
+    },
+    new Company
+    {
+        Name = "Alexandria Rides",
+        Email = "contact@alexrides.com",
+        Phone = "+20345678912",
+        Address = "15 Corniche Road, Alexandria",
+        Description = "Premium transportation in Alexandria",
+        LogoUrl = "alex_rides_logo.png",
+        IsApproved = true,
+        IsRejected = false,
+        RejectionReason = string.Empty,
+        CreatedDate = DateTime.UtcNow.AddMonths(-5),
+        ApprovedDate = DateTime.UtcNow.AddMonths(-5).AddDays(2),
+        AverageRating = 4.2,
+        TotalRatings = 120
+    },
+    new Company
+    {
+        Name = "Delta Transport",
+        Email = "info@deltatransport.com",
+        Phone = "+20456789123",
+        Address = "22 El-Nasr Street, Mansoura",
+        Description = "Serving the Delta region with quality transportation",
+        LogoUrl = "delta_transport_logo.png",
+        IsApproved = true,
+        IsRejected = false,
+        RejectionReason = string.Empty,
+        CreatedDate = DateTime.UtcNow.AddMonths(-4),
+        ApprovedDate = DateTime.UtcNow.AddMonths(-4).AddDays(5),
+        AverageRating = 4.0,
+        TotalRatings = 90
+    },
+    new Company
+    {
+        Name = "Luxor Travels",
+        Email = "support@luxortravels.com",
+        Phone = "+20567891234",
+        Address = "5 Karnak Temple Road, Luxor",
+        Description = "Tourist transportation in Upper Egypt",
+        LogoUrl = "luxor_travels_logo.png",
+        IsApproved = true,
+        IsRejected = false,
+        RejectionReason = string.Empty,
+        CreatedDate = DateTime.UtcNow.AddMonths(-3),
+        ApprovedDate = DateTime.UtcNow.AddMonths(-3).AddDays(4),
+        AverageRating = 4.8,
+        TotalRatings = 200
+    },
+    new Company
+    {
+        Name = "Red Sea Mobility",
+        Email = "info@redseamobility.com",
+        Phone = "+20678912345",
+        Address = "30 El-Salam Road, Hurghada",
+        Description = "Transportation solutions in Red Sea resorts",
+        LogoUrl = "red_sea_mobility_logo.png",
+        IsApproved = true,
+        IsRejected = false,
+        RejectionReason = string.Empty,
+        CreatedDate = DateTime.UtcNow.AddMonths(-2),
+        ApprovedDate = DateTime.UtcNow.AddMonths(-2).AddDays(3),
+        AverageRating = 4.6,
+        TotalRatings = 180
+    }
+};
 
                 await _context.Companies.AddRangeAsync(companies);
                 await _context.SaveChangesAsync();

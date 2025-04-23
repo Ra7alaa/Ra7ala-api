@@ -10,6 +10,8 @@ namespace Presentation
 
             // Add services to the container.
             builder.Services.AddControllers();
+            
+            builder.Services.AddCompanyServices();
 
             // Configure Identity services (must come before JWT services)
             builder.Services.AddIdentityServices(builder.Configuration);
