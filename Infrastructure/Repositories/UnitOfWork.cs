@@ -10,7 +10,7 @@ namespace Infrastructure.Repositories
     {
         private readonly ApplicationDbContext _context;
         private IGenericRepository<City> _citiesRepository;
-        private IGenericRepository<Station> _stationsRepository;
+        private IStationRepository _stationsRepository;
         private IGenericRepository<Company> _companiesRepository;
 
         public UnitOfWork(ApplicationDbContext context)
@@ -21,8 +21,8 @@ namespace Infrastructure.Repositories
         public IGenericRepository<City> Cities => 
             _citiesRepository ??= new GenericRepository<City>(_context);
 
-        public IGenericRepository<Station> Stations => 
-            _stationsRepository ??= new GenericRepository<Station>(_context);
+        public IStationRepository Stations => 
+            _stationsRepository ??= new StationRepository(_context);
 
         public IGenericRepository<Company> Companies => 
             _companiesRepository ??= new GenericRepository<Company>(_context);

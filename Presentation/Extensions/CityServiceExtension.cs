@@ -1,4 +1,6 @@
-using Infrastructure.Extensions;
+using Application.Services.City;
+using Application.Services.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Presentation.Extensions
 {
@@ -6,8 +8,7 @@ namespace Presentation.Extensions
     {
         public static IServiceCollection AddCityServices(this IServiceCollection services)
         {
-            // Call the extension method from Infrastructure layer
-            Infrastructure.Extensions.CityServicesExtension.AddCityServices(services);
+            services.AddScoped<ICityService, CityService>();
             
             return services;
         }
