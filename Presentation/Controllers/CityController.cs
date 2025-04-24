@@ -24,7 +24,7 @@ namespace Presentation.Controllers
             return Ok(cities);
         }
 
-         [HttpGet("{id}")]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetCityById(int id)
         {
             var city = await _cityService.GetCityByIdAsync(id);
@@ -75,8 +75,24 @@ namespace Presentation.Controllers
             return NoContent();
         }
 
-        // Add other actions as needed
+        // الحصول على جميع المدن مع محطاتها
+        [HttpGet("with-stations")]
+        public async Task<IActionResult> GetAllCitiesWithStations()
+        {
+            var cities = await _cityService.GetAllCitiesWithStationsAsync();
+            return Ok(cities);
+        }
 
-       
+        // الحصول على مدينة محددة مع محطاتها
+        [HttpGet("{id}/with-stations")]
+        public async Task<IActionResult> GetCityWithStationsById(int id)
+        {
+            var city = await _cityService.GetCityWithStationsByIdAsync(id);
+            if (city == null)
+            {
+                return NotFound();
+            }
+            return Ok(city);
+        }
     }
 }

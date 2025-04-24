@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Application.DTOs.City;
+using Application.DTOs.Station;
 using Application.Map;
 using Application.Services.Interfaces;
 using Domain.Entities;
@@ -13,15 +14,23 @@ namespace Application.Services.City
     public class CityService : ICityService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IStationService _stationService;
 
-        public CityService(IUnitOfWork unitOfWork)
+        public CityService(IUnitOfWork unitOfWork, IStationService stationService)
         {
             _unitOfWork = unitOfWork;
+            _stationService = stationService;
         }
 
         public async Task<IEnumerable<CityDto>> GetAllCitiesAsync()
         {
             var cities = await _unitOfWork.Cities.GetAllAsync();
+            return cities.ToCityDtoList();
+        }
+
+        public async Task<IEnumerable<CityDto>> GetAllCitiesWithStationsAsync()
+        {
+            var cities = await _unitOfWork.Cities.GetAllWithStationsAsync();
             return cities.ToCityDtoList();
         }
 
@@ -31,14 +40,34 @@ namespace Application.Services.City
             return city?.ToCityDto();
         }
 
+        public async Task<CityDto?> GetCityWithStationsByIdAsync(int id)
+        {
+            var city = await _unitOfWork.Cities.GetByIdWithStationsAsync(id);
+            return city?.ToCityDto();
+        }
+
         public async Task<CityDto> AddCityAsync(CityAddUpdateDto cityDto)
         {
             var city = cityDto.ToCity();
             await _unitOfWork.Cities.AddAsync(city);
             await _unitOfWork.SaveChangesAsync();
             
-            // ارجاع DTO كامل مع المعرف الجديد
-            return city.ToCityDto();
+            // إذا كانت هناك محطات مضافة مع المدينة، قم بإضافتها
+            if (cityDto.Stations != null && cityDto.Stations.Any())
+            {
+                // تعيين معرف المدينة المضافة للمحطات
+                foreach (var station in cityDto.Stations)
+                {
+                    station.CityId = city.Id;
+                }
+                
+                // إضافة المحطات باستخدام خدمة المحطات
+                await _stationService.AddStationsAsync(cityDto.Stations);
+            }
+            
+            // إعادة الحصول على المدينة مع المحطات المضافة
+            var updatedCity = await _unitOfWork.Cities.GetByIdWithStationsAsync(city.Id);
+            return updatedCity.ToCityDto();
         }
 
         public async Task<List<CityDto>> AddCitiesAsync(List<CityAddUpdateDto> citiesDto)
@@ -67,8 +96,22 @@ namespace Application.Services.City
             _unitOfWork.Cities.Update(city);
             await _unitOfWork.SaveChangesAsync();
             
-            // ارجاع DTO كامل بعد التحديث
-            return city.ToCityDto();
+            // إذا كانت هناك محطات محدثة، قم بتحديثها
+            if (cityDto.Stations != null && cityDto.Stations.Any())
+            {
+                // تعيين معرف المدينة للمحطات
+                foreach (var station in cityDto.Stations)
+                {
+                    station.CityId = city.Id;
+                }
+                
+                // إضافة/تحديث المحطات
+                await _stationService.AddStationsAsync(cityDto.Stations);
+            }
+            
+            // إعادة الحصول على المدينة المحدثة مع المحطات
+            var updatedCity = await _unitOfWork.Cities.GetByIdWithStationsAsync(city.Id);
+            return updatedCity.ToCityDto();
         }
 
         public async Task<bool> DeleteCityAsync(int id)

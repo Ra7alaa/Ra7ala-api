@@ -15,16 +15,15 @@ namespace Infrastructure.Data.Config
                    .WithMany(c => c.Stations)
                    .HasForeignKey(s => s.CityId)
                    .IsRequired()
-                   .OnDelete(DeleteBehavior.Restrict);
+                   .OnDelete(DeleteBehavior.Cascade);
             
             // Configure one-to-many relationship with Company (optional)
+            // تغيير سلوك الحذف بحيث عند حذف الشركة تُحذف المحطات المرتبطة بها
             builder.HasOne(s => s.Company)
                    .WithMany()
                    .HasForeignKey(s => s.CompanyId)
                    .IsRequired(false)
-                   .OnDelete(DeleteBehavior.SetNull);
-            
-
+                   .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

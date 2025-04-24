@@ -1,4 +1,5 @@
 using Application.DTOs.City;
+using Application.DTOs.Station;
 using Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -16,7 +17,9 @@ namespace Application.Map
             {
                 Id = city.Id,
                 Name = city.Name,
-                Governorate = city.Governorate
+                Governorate = city.Governorate,
+                // استخدام ToStationInCityDtoList بدلاً من ToDto
+                Stations = city.Stations?.Select(s => s.ToStationInCityDto()).ToList()
             };
         }
 
@@ -38,6 +41,7 @@ namespace Application.Map
                 Name = cityDto.Name,
                 Governorate = cityDto.Governorate,
                 IsDeleted = false
+                // No stations se crean aquí, ya que se gestionarán por separado
             };
         }
 

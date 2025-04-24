@@ -42,5 +42,21 @@ namespace Infrastructure.Repositories
             return await _context.Cities
                 .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
         }
+
+        // تنفيذ الطرق الجديدة للحصول على المدن مع المحطات
+        public async Task<City> GetByIdWithStationsAsync(int id)
+        {
+            return await _context.Cities
+                .Include(c => c.Stations.Where(s => !s.IsDeleted))
+                .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
+        }
+
+        public async Task<IEnumerable<City>> GetAllWithStationsAsync()
+        {
+            return await _context.Cities
+                .Include(c => c.Stations.Where(s => !s.IsDeleted))
+                .Where(c => !c.IsDeleted)
+                .ToListAsync();
+        }
     }
 }

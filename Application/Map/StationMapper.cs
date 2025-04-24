@@ -91,5 +91,27 @@ namespace Application.Map
 
             return existingStation;
         }
+
+        // طريقة جديدة لتحويل المحطة إلى DTO المخصص للعرض ضمن المدن
+        public static StationInCityDto ToStationInCityDto(this Station station)
+        {
+            if (station == null)
+                return null;
+
+            return new StationInCityDto
+            {
+                Id = station.Id,
+                Name = station.Name,
+                Latitude = station.Latitude,
+                Longitude = station.Longitude,
+                CompanyName = station.Company?.Name
+            };
+        }
+
+        // طريقة لتحويل مجموعة من المحطات إلى قائمة DTOs مخصصة للعرض ضمن المدن
+        public static IEnumerable<StationInCityDto> ToStationInCityDtoList(this IEnumerable<Station> stations)
+        {
+            return stations?.Select(s => s.ToStationInCityDto()).ToList();
+        }
     }
 }

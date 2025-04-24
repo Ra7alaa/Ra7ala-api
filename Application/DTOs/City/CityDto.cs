@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Application.DTOs.Station;
 
 namespace Application.DTOs.City
 {
@@ -18,5 +19,8 @@ namespace Application.DTOs.City
         [Required]
         [StringLength(20)]
         public string Governorate { get; set; } = string.Empty;
+        
+        // استخدام DTO المخصص للمحطات ضمن المدن
+        public List<StationInCityDto>? Stations { get; set; }
     }
 }

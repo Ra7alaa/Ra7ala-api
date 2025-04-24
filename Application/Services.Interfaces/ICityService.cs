@@ -16,5 +16,9 @@ namespace Application.Services.Interfaces
         Task<CityDto?> UpdateCityAsync(int id, CityAddUpdateDto cityDto);
         Task<bool> DeleteCityAsync(int id);
         Task<IEnumerable<CityDto>> GetCitiesByGovernorateAsync(string governorate);
+        
+        // طرق جديدة للحصول على المدن مع المحطات
+        Task<IEnumerable<CityDto>> GetAllCitiesWithStationsAsync();
+        Task<CityDto?> GetCityWithStationsByIdAsync(int id);
     }
 }
