@@ -111,16 +111,21 @@ namespace Infrastructure.Repositories.Company
         }
 
         // Get the average rating of a company
-        public async Task<double> GetAverageRatingAsync(int companyId)
+       public async Task<int> GetAverageRatingAsync(int companyId)
         {
             var feedbacks = await _context.Set<CompanyFeedback>()
                 .Where(f => f.CompanyId == companyId)
                 .ToListAsync();
-
+            
             if (!feedbacks.Any())
-                return 0;
-
-            return feedbacks.Average(f => f.Rating);
+                return 1; 
+                
+            double averageRating = feedbacks.Average(f => f.Rating);
+            averageRating = Math.Max(1, averageRating);
+            int starRating = (int)Math.Round(averageRating);
+            starRating = Math.Min(5, starRating);
+            
+            return starRating;
         }
 
         // Check if a company exists by name and email

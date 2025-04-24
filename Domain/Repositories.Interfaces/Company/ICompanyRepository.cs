@@ -32,8 +32,8 @@ namespace Domain.Repositories.Interfaces
         Task<bool> UpdateCompanyRatingAsync(int companyId, double newRating);
 
         // Get the average rating of a company
-        Task<double> GetAverageRatingAsync(int companyId);
-
+        Task<int> GetAverageRatingAsync(int companyId);
+    
         // Check if a company exists by name and email
         Task<bool> ExistsAsync(Expression<Func<Company, bool>> predicate);
     }
