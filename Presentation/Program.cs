@@ -35,6 +35,9 @@ namespace Presentation
             // Configure Repository services
             builder.Services.AddRepositoryServices();
             
+            // Configure Station services
+            builder.Services.AddStationServices();
+            
             // Configure Data Seed services
             builder.Services.AddDataSeedServices();
 

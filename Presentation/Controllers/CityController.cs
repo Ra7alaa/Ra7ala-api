@@ -36,30 +36,30 @@ namespace Presentation.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddCity([FromBody] CityDto cityDto)
+        public async Task<IActionResult> AddCity([FromBody] CityAddUpdateDto cityDto)
         {
-            await _cityService.AddCityAsync(cityDto);
-            return Ok(cityDto);
+            var result = await _cityService.AddCityAsync(cityDto);
+            return CreatedAtAction(nameof(GetCityById), new { id = result.Id }, result);
         }
 
         [HttpPost("AddCities")]
-        public async Task<IActionResult> AddCities([FromBody] List<CityDto> cities)
+        public async Task<IActionResult> AddCities([FromBody] List<CityAddUpdateDto> cities)
         {
-            await _cityService.AddCitiesAsync(cities);
-            return Ok(cities);
+            var result = await _cityService.AddCitiesAsync(cities);
+            return Ok(result);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateCity(int id, [FromBody] CityDto cityDto)
+        public async Task<IActionResult> UpdateCity(int id, [FromBody] CityAddUpdateDto cityDto)
         {
-          var result =  await _cityService.UpdateCityAsync(id, cityDto);
+            var result = await _cityService.UpdateCityAsync(id, cityDto);
 
-             if (!result)
+            if (result == null)
             {
                 return NotFound();
             }
             
-            return Ok(cityDto);
+            return Ok(result);
         }
 
         [HttpDelete("{id}")]
@@ -72,7 +72,27 @@ namespace Presentation.Controllers
                 return NotFound();
             }
             
-            return Ok();
+            return NoContent();
+        }
+
+        // الحصول على جميع المدن مع محطاتها
+        [HttpGet("with-stations")]
+        public async Task<IActionResult> GetAllCitiesWithStations()
+        {
+            var cities = await _cityService.GetAllCitiesWithStationsAsync();
+            return Ok(cities);
+        }
+
+        // الحصول على مدينة محددة مع محطاتها
+        [HttpGet("{id}/with-stations")]
+        public async Task<IActionResult> GetCityWithStationsById(int id)
+        {
+            var city = await _cityService.GetCityWithStationsByIdAsync(id);
+            if (city == null)
+            {
+                return NotFound();
+            }
+            return Ok(city);
         }
     }
 }

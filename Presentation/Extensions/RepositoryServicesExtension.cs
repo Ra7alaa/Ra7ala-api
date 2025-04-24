@@ -1,4 +1,6 @@
-using Infrastructure.Extensions;
+using Domain.Repositories.Interfaces;
+using Infrastructure.Repositories;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Presentation.Extensions
 {
@@ -6,8 +8,11 @@ namespace Presentation.Extensions
     {
         public static IServiceCollection AddRepositoryServices(this IServiceCollection services)
         {
-            // Call the extension method from Infrastructure layer
-            Infrastructure.Extensions.RepositoryServicesExtension.AddRepositoryServices(services);
+            // Register the generic repository
+            services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+            
+            // Register the Unit of Work
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
             
             return services;
         }
