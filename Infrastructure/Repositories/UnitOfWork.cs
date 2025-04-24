@@ -9,7 +9,7 @@ namespace Infrastructure.Repositories
     public class UnitOfWork : IUnitOfWork, IDisposable
     {
         private readonly ApplicationDbContext _context;
-        private IGenericRepository<City> _citiesRepository;
+        private ICityRepository _citiesRepository;
         private IStationRepository _stationsRepository;
         private IGenericRepository<Company> _companiesRepository;
 
@@ -18,8 +18,8 @@ namespace Infrastructure.Repositories
             _context = context;
         }
 
-        public IGenericRepository<City> Cities => 
-            _citiesRepository ??= new GenericRepository<City>(_context);
+        public ICityRepository Cities => 
+            _citiesRepository ??= new CityRepository(_context);
 
         public IStationRepository Stations => 
             _stationsRepository ??= new StationRepository(_context);

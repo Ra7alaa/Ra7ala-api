@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Application.DTOs.City;
+using Application.Map;
 using Application.Services.Interfaces;
 using Domain.Entities;
 using Domain.Repositories.Interfaces;
@@ -21,95 +22,73 @@ namespace Application.Services.City
         public async Task<IEnumerable<CityDto>> GetAllCitiesAsync()
         {
             var cities = await _unitOfWork.Cities.GetAllAsync();
-            return cities
-                .Where(c => !c.IsDeleted)
-                .Select(c => new CityDto
-                {
-                    Id = c.Id,
-                    Name = c.Name,
-                    Governorate = c.Governorate
-                });
+            return cities.ToCityDtoList();
         }
 
         public async Task<CityDto?> GetCityByIdAsync(int id)
         {
             var city = await _unitOfWork.Cities.GetByIdAsync(id);
-            
-            if (city == null || city.IsDeleted)
-                return null; // Return null instead of throwing exception
-
-            return new CityDto
-            {
-                Id = city.Id,
-                Name = city.Name,
-                Governorate = city.Governorate
-            };
+            return city?.ToCityDto();
         }
 
-        public async Task AddCityAsync(CityDto cityDto)
+        public async Task<CityDto> AddCityAsync(CityAddUpdateDto cityDto)
         {
-            var city = new Domain.Entities.City
-            {
-                Name = cityDto.Name,
-                Governorate = cityDto.Governorate,
-                IsDeleted = false
-            };
-
+            var city = cityDto.ToCity();
             await _unitOfWork.Cities.AddAsync(city);
             await _unitOfWork.SaveChangesAsync();
             
-            // Update the DTO with the newly created ID
-            cityDto.Id = city.Id;
+            // ارجاع DTO كامل مع المعرف الجديد
+            return city.ToCityDto();
         }
 
-        public async Task AddCitiesAsync(List<CityDto> cities)
+        public async Task<List<CityDto>> AddCitiesAsync(List<CityAddUpdateDto> citiesDto)
         {
-            var citiesList = new List<Domain.Entities.City>();
+            // استخدام LINQ للتحويل (من DTO إلى Entity)
+            var cities = citiesDto.Select(dto => dto.ToCity()).ToList();
 
-            foreach (var cityDto in cities)
-            {
-                var city = new Domain.Entities.City
-                {
-                    Name = cityDto.Name,
-                    Governorate = cityDto.Governorate,
-                    IsDeleted = false
-                };
-
-                citiesList.Add(city);
-            }
-
-            await _unitOfWork.Cities.AddRangeAsync(citiesList);
+            await _unitOfWork.Cities.AddRangeAsync(cities);
             await _unitOfWork.SaveChangesAsync();
+            
+            // ارجاع قائمة DTOs كاملة مع المعرفات الجديدة
+            return cities.Select(c => c.ToCityDto()).ToList();
         }
 
-        public async Task<bool> UpdateCityAsync(int id, CityDto cityDto)
+        public async Task<CityDto?> UpdateCityAsync(int id, CityAddUpdateDto cityDto)
         {
-            // Use the id parameter instead of cityDto.Id
             var city = await _unitOfWork.Cities.GetByIdAsync(id);
             
-            if (city == null || city.IsDeleted)
-                return false; // Return false instead of throwing exception
+            if (city == null)
+                return null;
 
+            // تحديث خصائص الكيان
             city.Name = cityDto.Name;
             city.Governorate = cityDto.Governorate;
             
             _unitOfWork.Cities.Update(city);
             await _unitOfWork.SaveChangesAsync();
-            return true; // Return true to indicate success
+            
+            // ارجاع DTO كامل بعد التحديث
+            return city.ToCityDto();
         }
 
         public async Task<bool> DeleteCityAsync(int id)
         {
             var city = await _unitOfWork.Cities.GetByIdAsync(id);
             
-            if (city == null || city.IsDeleted)
-                return false; // Return false instead of throwing exception
+            if (city == null)
+                return false;
 
             // Using soft delete instead of hard delete
             city.IsDeleted = true;
             _unitOfWork.Cities.Update(city);
             await _unitOfWork.SaveChangesAsync();
-            return true; // Return true to indicate success
+            return true;
+        }
+
+        public async Task<IEnumerable<CityDto>> GetCitiesByGovernorateAsync(string governorate)
+        {
+            var cities = await _unitOfWork.Cities.GetCitiesByGovernorateAsync(governorate);
+            return cities.ToCityDtoList();
         }
     }
 }

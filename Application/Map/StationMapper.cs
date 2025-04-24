@@ -48,7 +48,37 @@ namespace Application.Map
             };
         }
 
+        public static Station ToEntity(this StationAddUpdateDto stationDto)
+        {
+            if (stationDto == null)
+                return null;
+
+            return new Station
+            {
+                Name = stationDto.Name,
+                Latitude = stationDto.Latitude,
+                Longitude = stationDto.Longitude,
+                CityId = stationDto.CityId,
+                CompanyId = stationDto.CompanyId,
+                IsDeleted = false
+            };
+        }
+
         public static Station ToEntity(this StationDto stationDto, Station existingStation)
+        {
+            if (stationDto == null || existingStation == null)
+                return existingStation;
+
+            existingStation.Name = stationDto.Name;
+            existingStation.Latitude = stationDto.Latitude;
+            existingStation.Longitude = stationDto.Longitude;
+            existingStation.CityId = stationDto.CityId;
+            existingStation.CompanyId = stationDto.CompanyId;
+
+            return existingStation;
+        }
+
+        public static Station ToEntity(this StationAddUpdateDto stationDto, Station existingStation)
         {
             if (stationDto == null || existingStation == null)
                 return existingStation;

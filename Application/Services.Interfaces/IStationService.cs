@@ -15,10 +15,10 @@ namespace Application.Services.Interfaces
         Task<IEnumerable<StationDto>> GetStationsByCityId(int cityId);
         Task<IEnumerable<StationDto>> GetStationsByCompanyId(int companyId);
         Task<IEnumerable<StationDto>> GetNearbyStations(double latitude, double longitude, double radiusInKm);
-        Task AddStation(StationDto stationDto);
+        Task<StationDto> AddStation(StationAddUpdateDto stationDto);
 
-        Task AddStationsAsync(List<StationDto> stationDtos);
-        Task<bool> UpdateStation(int id, StationDto stationDto);
+        Task<List<StationDto>> AddStationsAsync(List<StationAddUpdateDto> stationDtos);
+        Task<StationDto?> UpdateStation(int id, StationAddUpdateDto stationDto);
         Task<bool> DeleteStation(int id);
     }
 }

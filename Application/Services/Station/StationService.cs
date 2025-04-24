@@ -20,11 +20,14 @@ namespace Application.Services.Station
             _unitOfWork = unitOfWork;
         }
 
-        public async Task AddStation(StationDto stationDto)
+        public async Task<StationDto> AddStation(StationAddUpdateDto stationDto)
         {
             var station = stationDto.ToEntity();
             await _unitOfWork.Stations.AddAsync(station);
             await _unitOfWork.SaveChangesAsync();
+            
+            // إرجاع DTO كامل مع المعرف الذي تم إنشاؤه
+            return station.ToDto();
         }
 
         public async Task<bool> DeleteStation(int id)
@@ -78,34 +81,32 @@ namespace Application.Services.Station
             return stations.ToDtoList();
         }
 
-        public async Task<bool> UpdateStation(int id, StationDto stationDto)
+        public async Task<StationDto?> UpdateStation(int id, StationAddUpdateDto stationDto)
         {
             var station = await _unitOfWork.Stations.GetByIdAsync(id);
 
             if (station == null)
             {
-                return false;
+                return null;
             }
 
             stationDto.ToEntity(station); // يقوم بتحديث الكائن الموجود
             _unitOfWork.Stations.Update(station);
             await _unitOfWork.SaveChangesAsync();
 
-            return true;
+            // إرجاع DTO كامل بعد التحديث
+            return station.ToDto();
         }
 
-        public async Task AddStationsAsync(List<StationDto> stationDtos)
+        public async Task<List<StationDto>> AddStationsAsync(List<StationAddUpdateDto> stationDtos)
         {
-            var stations = new List<Domain.Entities.Station>();
-            foreach (var stationDto in stationDtos)
-            {
-                var station = stationDto.ToEntity();
-                stations.Add(station);
-            }
-
-           await _unitOfWork.Stations.AddRangeAsync(stations);
+            var stations = stationDtos.Select(dto => dto.ToEntity()).ToList();
+            
+            await _unitOfWork.Stations.AddRangeAsync(stations);
             await _unitOfWork.SaveChangesAsync();
             
+            // إرجاع قائمة DTOs كاملة مع المعرفات الجديدة
+            return stations.Select(s => s.ToDto()).ToList();
         }
     }
 }

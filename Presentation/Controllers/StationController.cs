@@ -30,30 +30,39 @@ namespace Presentation.Controllers
             return station;
         }
 
+        [HttpGet("GetStationsByCity/{cityName}")]
+        public async Task<IEnumerable<StationDto>> GetStationsByCityName(string cityName) => await _stationService.GetStationsByCityName(cityName);
+
+
+        [HttpGet("GetStationsByCompanyId/{companyId}")]
+        public async Task<IEnumerable<StationDto>> GetStationsByCompanyId(int companyId) => await _stationService.GetStationsByCompanyId(companyId);
+
+        // [HttpGet("GetNearbyStations/{latitude}/{longitude}/{radiusInKm}")]
+        // public async Task<IEnumerable<StationDto>> GetNearbyStations(double latitude, double longitude, double radiusInKm) => await _stationService.GetNearbyStations(latitude, longitude, radiusInKm);
+        
         [HttpPost]
-        public async Task<ActionResult<StationDto>> CreateStation(StationDto stationDto)
+        public async Task<ActionResult<StationDto>> AddStation(StationAddUpdateDto stationDto)
         {
-            await _stationService.AddStation(stationDto);
-            return CreatedAtAction(nameof(GetStation), new { id = stationDto.Id }, stationDto);
+            var result = await _stationService.AddStation(stationDto);
+            return CreatedAtAction(nameof(GetStation), new { id = result.Id }, result);
         }
 
         [HttpPost("AddStations")]
-        public async Task<ActionResult<IEnumerable<StationDto>>> AddStations([FromForm] List<StationDto> stationDtos)
-
+        public async Task<ActionResult<IEnumerable<StationDto>>> AddStations([FromBody] List<StationAddUpdateDto> stationDtos)
         {
-            await _stationService.AddStationsAsync(stationDtos);
-            return Ok(stationDtos);
+            var result = await _stationService.AddStationsAsync(stationDtos);
+            return Ok(result);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateStation(int id, StationDto stationDto)
+        public async Task<IActionResult> UpdateStation(int id, StationAddUpdateDto stationDto)
         {
             var result = await _stationService.UpdateStation(id, stationDto);
-            if (!result)
+            if (result == null)
             {
                 return NotFound();
             }
-            return Ok(stationDto);
+            return Ok(result);
         }
 
         [HttpDelete("{id}")]
@@ -64,9 +73,7 @@ namespace Presentation.Controllers
             {
                 return NotFound();
             }
-            return Ok();
+            return NoContent();
         }
-
-
     }
 }

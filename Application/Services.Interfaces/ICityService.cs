@@ -11,10 +11,10 @@ namespace Application.Services.Interfaces
     {
         Task<IEnumerable<CityDto>> GetAllCitiesAsync();
         Task<CityDto?> GetCityByIdAsync(int id);
-        Task AddCityAsync(CityDto cityDto);
-
-        Task AddCitiesAsync(List<CityDto> cities);
-        Task<bool> UpdateCityAsync(int id,CityDto cityDto);
+        Task<CityDto> AddCityAsync(CityAddUpdateDto cityDto);
+        Task<List<CityDto>> AddCitiesAsync(List<CityAddUpdateDto> cities);
+        Task<CityDto?> UpdateCityAsync(int id, CityAddUpdateDto cityDto);
         Task<bool> DeleteCityAsync(int id);
+        Task<IEnumerable<CityDto>> GetCitiesByGovernorateAsync(string governorate);
     }
 }
