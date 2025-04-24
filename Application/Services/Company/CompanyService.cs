@@ -367,10 +367,10 @@ namespace Application.Services
                 var password = GenerateSecurePassword();
                 var admin = new AppUser
                 {
-                    UserName = $"admin_{company.Name.ToLower().Replace(" ", "_")}",
-                    Email = company.Email,
+                    UserName = $"Superadmin_{company.Name.ToLower().Replace(" ", "_")}",
+                    Email = company.SuperAdminEmail,
                     EmailConfirmed = true,
-                    PhoneNumber = company.Phone,
+                    PhoneNumber = company.SuperAdminPhone,
                     UserType = UserType.Admin
                 };
 
@@ -380,10 +380,10 @@ namespace Application.Services
                     throw new Exception($"Failed to create admin account: {string.Join(", ", result.Errors)}");
                 }
 
-                await _userManager.AddToRoleAsync(admin, "Admin");
+                await _userManager.AddToRoleAsync(admin, "SuperAdmin");
 
                 // Send email with credentials
-                await _emailService.SendAdminCredentialsEmailAsync(admin.Email, admin.UserName, password);
+                await _emailService.SendAdminCredentialsEmailAsync(company.Name, admin.Email, admin.UserName, password);
             }
             catch (Exception ex)
             {
