@@ -19,23 +19,22 @@ namespace Domain.Repositories.Interfaces
         // Update a company's status (approved or rejected) with an optional rejection reason
         Task<bool> UpdateCompanyStatusAsync(int id, bool isApproved, string? rejectionReason = null);
         
-        // Update the company's rating based on the company ID and the new rating
-        Task<bool> UpdateCompanyRatingAsync(int companyId, double newRating);
-        
         // Get paginated list of companies with optional filter
         Task<(IEnumerable<Company> Companies, int TotalCount)> GetPagedCompaniesAsync(
             int pageNumber,
             int pageSize,
             Expression<Func<Company, bool>>? filter = null);
 
-
-        // Get a company by ID including its ratings
+       
         Task<Company?> GetCompanyWithRatingsAsync(int id);
+
+        // Update the company's rating based on the company ID and the new rating
+        Task<bool> UpdateCompanyRatingAsync(int companyId, double newRating);
 
         // Get the average rating of a company
         Task<double> GetAverageRatingAsync(int companyId);
 
         // Check if a company exists by name and email
-        Task<bool> ExistsAsync(string name, string email);
+        Task<bool> ExistsAsync(Expression<Func<Company, bool>> predicate);
     }
 }

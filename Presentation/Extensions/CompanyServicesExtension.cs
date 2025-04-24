@@ -14,11 +14,7 @@ namespace Presentation.Extensions
     {
         public static IServiceCollection AddCompanyServices(this IServiceCollection services)
         {
-            // Register repositories
-            services.AddScoped<IUnitOfWork, UnitOfWork>();
-            services.AddScoped<IGenericRepository<Domain.Entities.Company>, GenericRepository<Domain.Entities.Company>>();
-            services.AddScoped<ICompanyRepository, CompanyRepository>();
-            
+           
             // Register services
             services.AddScoped<ICompanyService, CompanyService>();
             

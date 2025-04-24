@@ -30,6 +30,11 @@ namespace Domain.Entities
 
         public string LogoUrl { get; set; } = string.Empty;
 
+        // Super Admin Data
+        public string SuperAdminName { get; set; } = string.Empty;
+        public string SuperAdminEmail { get; set; } = string.Empty;
+        public string SuperAdminPhone { get; set; } = string.Empty;
+        
         // Registration status
         public bool IsApproved { get; set; } = false;
         public bool IsRejected { get; set; } = false;
@@ -51,6 +56,6 @@ namespace Domain.Entities
         // public virtual ICollection<Trip> Trips { get; set; } = new List<Trip>();
         public virtual ICollection<Route> Routes { get; set; } = new List<Route>();
         public virtual ICollection<CompanyFeedback> Feedbacks { get; set; } = new List<CompanyFeedback>();
-        public string RejectionReason { get; set; }
+        public string? RejectionReason { get; set; }
     }
 }

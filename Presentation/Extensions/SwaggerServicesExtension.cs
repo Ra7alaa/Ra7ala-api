@@ -17,6 +17,7 @@ namespace Presentation.Extensions
                     Version = "v1",
                     Description = "API for Ra7ala transportation service"
                 });
+                // c.EnableAnnotations(); // Enable annotations for Swagger documentation
             });
 
             return services;

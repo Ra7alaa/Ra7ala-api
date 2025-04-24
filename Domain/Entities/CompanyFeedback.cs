@@ -12,15 +12,14 @@ namespace Domain.Entities
     public class CompanyFeedback
     {
         public int Id { get; set; }
-        public int PassengerId { get; set; }
+        public string PassengerId { get; set; } = string.Empty; // Changed to string for AppUser Id
         public int CompanyId { get; set; }
-        public int Rating { get; set; } // 1-5
-        public string Comment { get; set; }
+        public int Rating { get; set; }
+        public string Comment { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         
         // Navigation properties
-        public virtual Passenger Passenger { get; set; }
-        public virtual Company Company { get; set; }
-       
+        public virtual AppUser Passenger { get; set; } = null!;
+        public virtual Company Company { get; set; } = null!;
     }
 }

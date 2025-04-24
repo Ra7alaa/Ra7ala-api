@@ -8,14 +8,26 @@ namespace Application.Services.Interfaces
 {
    public interface ICompanyService
     {
+        // Creates a new company using the provided data.
+        Task<CompanyDto> CreateCompanyAsync(CreateCompanyDto createCompanyDto);
+
         // Retrieves a paginated list of companies.
-        Task<CompanyListResponseDto> GetCompaniesAsync(int pageNumber , int pageSize );
+        Task<CompanyListResponseDto> GetAllCompaniesAsync(int pageNumber, int pageSize);
+        
+        // Retrieves a paginated list of companies that are pending.
+        Task<CompanyListResponseDto> GetPendingCompaniesAsync(int pageNumber = 1, int pageSize = 10);
+        
+        // Retrieves a paginated list of companies that have been approved.
+        Task<CompanyListResponseDto> GetApprovedCompaniesAsync(int pageNumber = 1, int pageSize = 10);
+        
+        // Retrieves a paginated list of companies that have been rejected.
+        Task<CompanyListResponseDto> GetRejectedCompaniesAsync(int pageNumber = 1, int pageSize = 10);
+        
+        // Retrieves a paginated list of companies with Filter.
+        Task<CompanyListResponseDto> GetCompaniesAsync(int pageNumber, int pageSize, CompanyFilterDto? filter = default);
 
         // Retrieves a specific company by its ID.
         Task<CompanyDto> GetCompanyByIdAsync(int id);
-
-        // Creates a new company using the provided data.
-        Task<CompanyDto> CreateCompanyAsync(CreateCompanyDto createCompanyDto);
 
         // Updates an existing company with the provided data.
         Task<CompanyDto> UpdateCompanyAsync(int id, UpdateCompanyDto updateCompanyDto);
@@ -28,9 +40,6 @@ namespace Application.Services.Interfaces
 
         // Allows users to rate a company and add a comment.
         Task<CompanyDto> RateCompanyAsync(int companyId, int rating, string? comment, string userId);
-
-        // Retrieves a list of companies that are pending approval or registration.
-        Task<List<CompanyDto>> GetPendingCompaniesAsync();
 
         // Calculates the average rating for a given company.
         Task<double> GetCompanyAverageRatingAsync(int companyId);
