@@ -20,17 +20,36 @@ namespace Infrastructure.Repositories.Company
             _context = context;
         }
 
+        // Retrieve a company by its ID
+        public async Task<Domain.Entities.Company?> GetCompanyByIdAsync(int id)
+        {
+            return await _context.Set<Domain.Entities.Company>()
+                .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
+        }
+        // Check if a user has access to a specific company based on their ID and the company's ID
+        public async Task<bool> UserHasAccessToCompany(string userId, int companyId)
+        {
+            return await _context.Companies
+                .AnyAsync(c => c.Id == companyId && 
+                            !c.IsDeleted && 
+                            (c.SuperAdmin.Id == userId || 
+                            c.Admins.Any(a => a.Id == userId)));
+        }
         // Retrieve a company with additional details by its ID
         // .Include(c => c.Trips)
         public async Task<Domain.Entities.Company> GetCompanyWithDetailsAsync(int id)
         {
             return await _context.Set<Domain.Entities.Company>()
+                .Include(c => c.SuperAdmin)
+                    .ThenInclude(sa => sa!.AppUser)
                 .Include(c => c.Admins)
+                    .ThenInclude(sa => sa!.AppUser)
                 .Include(c => c.Drivers)
+                    .ThenInclude(sa => sa!.AppUser)
                 .Include(c => c.Buses)
                 .Include(c => c.Routes)
                 .Include(c => c.Feedbacks)
-                .Include(c => c.SuperAdmin)
+                    .ThenInclude(sa => sa!.Passenger)
                 .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
         }
 
@@ -93,8 +112,8 @@ namespace Infrastructure.Repositories.Company
         {
             return await _context.Set<Domain.Entities.Company>()
                 .Include(c => c.Feedbacks)
-                .ThenInclude(f => f.Passenger)
-                .FirstOrDefaultAsync(c => c.Id == id);
+                    .ThenInclude(f => f.Passenger)
+                .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
         }
        
         // Update the company's rating based on the company ID and the new rating

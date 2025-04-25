@@ -26,8 +26,14 @@ namespace Application.Services.Interfaces
         // Retrieves a paginated list of companies with Filter.
         Task<CompanyListResponseDto> GetCompaniesAsync(int pageNumber, int pageSize, CompanyFilterDto? filter = default);
 
-        // Retrieves a specific company by its ID.
+        // Retrieves a specific company by its ID for owner.
         Task<CompanyDto> GetCompanyByIdAsync(int id);
+
+        // Retrieves the user profile for a given company.
+        Task<CompanyUserProfileDto> GetCompanyUserProfileAsync(int companyId);
+
+        // Retrieves the admin profile for a given company and user.
+        Task<CompanyAdminProfileDto> GetCompanyAdminProfileAsync(int companyId, string userId);
 
         // Updates an existing company with the provided data.
         Task<CompanyDto> UpdateCompanyAsync(int id, UpdateCompanyDto updateCompanyDto);
@@ -46,5 +52,6 @@ namespace Application.Services.Interfaces
 
         // Retrieves detailed ratings for a given company.
         Task<CompanyRatingsDto> GetCompanyRatingsDetailsAsync(int companyId);
+
     }
 }

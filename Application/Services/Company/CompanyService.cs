@@ -190,6 +190,64 @@ namespace Application.Services
 
             return MapToCompanyDto(company);
         }
+
+        public async Task<CompanyUserProfileDto> GetCompanyUserProfileAsync(int companyId)
+        {
+            var company = await _unitOfWork.CompanyRepository.GetCompanyByIdAsync(companyId);
+            var averageRating = await GetCompanyAverageRatingAsync(companyId);
+            if (company == null)
+                throw new KeyNotFoundException($"Company with ID {companyId} not found");
+
+            return new CompanyUserProfileDto
+            {
+                Id = company.Id,
+                Name = company.Name,
+                Email = company.Email,
+                Phone = company.Phone,
+                Address = company.Address,
+                Description = company.Description,
+                LogoUrl = company.LogoUrl,
+                AverageRating = averageRating
+                // TotalRatings = company.TotalRatings ?? 0
+            };
+        }
+
+        // Retrieves the admin profile for a given company and user.
+        public async Task<CompanyAdminProfileDto> GetCompanyAdminProfileAsync(int companyId, string userId)
+        {
+            var company = await _unitOfWork.CompanyRepository.GetCompanyWithDetailsAsync(companyId);
+            if (company == null)
+                throw new KeyNotFoundException($"Company with ID {companyId} not found");
+
+            // Verify if user has access to this company
+            // var userHasAccess = await _unitOfWork.CompanyRepository.UserHasAccessToCompany(userId, companyId);
+            // if (!userHasAccess)
+            //     throw new UnauthorizedAccessException("You don't have access to this company's admin profile");
+
+            return new CompanyAdminProfileDto
+            {
+                Id = company.Id,
+                Name = company.Name,
+                Email = company.Email,
+                Phone = company.Phone,
+                Address = company.Address,
+                Description = company.Description,
+                LogoUrl = company.LogoUrl,
+                AverageRating = company.AverageRating ?? 0,
+                TotalRatings = company.TotalRatings ?? 0,
+                SuperAdminName = company.SuperAdminName,
+                SuperAdminEmail = company.SuperAdminEmail,
+                SuperAdminPhone = company.SuperAdminPhone,
+                CreatedDate = company.CreatedDate,
+                ApprovedDate = company.ApprovedDate,
+                Admins = company.Admins.Select(a => new AdminInfoDto
+                {
+                    Name = a.AppUser.FullName,
+                    Email = a.AppUser.Email ?? string.Empty,
+                    Department = a.Department
+                }).ToList(),
+            };
+        }
        
         // Updates an existing company with the provided data.
         public async Task<CompanyDto> UpdateCompanyAsync(int id, UpdateCompanyDto updateDto)

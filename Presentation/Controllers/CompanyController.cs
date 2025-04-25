@@ -224,6 +224,72 @@ namespace Presentation.Controllers
             }
         }
 
+        // Get company user profile
+        // [SwaggerOperation(
+        //     Summary = "Get company user profile",
+        //     Description = "Retrieves the user profile of a specific company.",
+        //     OperationId = "GetCompanyUserProfile",
+        //     Tags = new[] { "Company Management" }
+        // )]
+        [HttpGet("{id}/user-profile")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<CompanyUserProfileDto>> GetCompanyUserProfile(int id)
+        {
+            try
+            {
+                var profile = await _companyService.GetCompanyUserProfileAsync(id);
+                return Ok(profile);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving company user profile for company {Id}", id);
+                return StatusCode(500, "An error occurred while retrieving the company profile");
+            }
+        }
+
+        // Get company admin profile by ID
+        // [SwaggerOperation(
+        //     Summary = "Get company admin profile",
+        //     Description = "Retrieves the admin profile of a specific company.",
+        //     OperationId = "GetCompanyAdminProfile",
+        //     Tags = new[] { "Company Management" }
+        // )]
+        [HttpGet("{id}/admin-profile")]
+        //[Authorize(Roles = "Admin,SuperAdmin")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<ActionResult<CompanyAdminProfileDto>> GetCompanyAdminProfile(int id)
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized();
+
+                var profile = await _companyService.GetCompanyAdminProfileAsync(id, userId);
+                return Ok(profile);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving company admin profile for company {Id}", id);
+                return StatusCode(500, "An error occurred while retrieving the company profile");
+            }
+        }
+
         // Update company details
         // [SwaggerOperation(
         //     Summary = "Update company information",
@@ -379,9 +445,16 @@ namespace Presentation.Controllers
                 return StatusCode(500, "An error occurred while retrieving the company rating");
             }
         }
-        
+
+        // Get detailed ratings for a company
+        // [SwaggerOperation(
+        //     Summary = "Get company ratings details",
+        //     Description = "Retrieves detailed ratings and feedback for a specific company.",
+        //     OperationId = "GetCompanyRatingsDetails",
+        //     Tags = new[] { "Company Rating" }
+        // )]
         [HttpGet("{id}/ratings-details")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        //[Authorize(Roles = "Admin,SuperAdmin")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]

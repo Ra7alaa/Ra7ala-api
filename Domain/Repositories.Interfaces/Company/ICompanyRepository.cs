@@ -13,6 +13,12 @@ namespace Domain.Repositories.Interfaces
         // Retrieve a company with additional details by its ID
         Task<Company> GetCompanyWithDetailsAsync(int id);
         
+        // Retrieve a company by its ID
+        Task<Company?> GetCompanyByIdAsync(int id);
+
+        // Check if a user has access to a specific company based on their ID and the company's ID
+        Task<bool> UserHasAccessToCompany(string userId, int companyId);
+
         // Retrieve a list of companies that are pending approval
         Task<List<Company>> GetPendingCompaniesAsync();
         
