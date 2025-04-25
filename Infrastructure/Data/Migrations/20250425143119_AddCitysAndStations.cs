@@ -5,7 +5,7 @@
 namespace Infrastructure.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class AddCityAndStation : Migration
+    public partial class AddCitysAndStations : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -32,9 +32,8 @@ namespace Infrastructure.Data.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Address = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Phone = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Latitude = table.Column<decimal>(type: "decimal(18,9)", precision: 18, scale: 9, nullable: false),
+                    Longitude = table.Column<decimal>(type: "decimal(18,9)", precision: 18, scale: 9, nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
                     CityId = table.Column<int>(type: "int", nullable: false),
                     CompanyId = table.Column<int>(type: "int", nullable: true)
@@ -47,13 +46,13 @@ namespace Infrastructure.Data.Migrations
                         column: x => x.CityId,
                         principalTable: "Cities",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Stations_Companies_CompanyId",
                         column: x => x.CompanyId,
                         principalTable: "Companies",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250423081028_updateStationEntity")]
-    partial class updateStationEntity
+    [Migration("20250425143119_AddCitysAndStations")]
+    partial class AddCitysAndStations
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -274,10 +274,12 @@ namespace Infrastructure.Data.Migrations
                         .HasColumnType("bit");
 
                     b.Property<decimal>("Latitude")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 9)
+                        .HasColumnType("decimal(18,9)");
 
                     b.Property<decimal>("Longitude")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 9)
+                        .HasColumnType("decimal(18,9)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -503,13 +505,13 @@ namespace Infrastructure.Data.Migrations
                     b.HasOne("Domain.Entities.City", "City")
                         .WithMany("Stations")
                         .HasForeignKey("CityId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Domain.Entities.Company", "Company")
                         .WithMany()
                         .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("City");
 

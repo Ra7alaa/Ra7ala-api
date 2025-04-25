@@ -278,14 +278,6 @@ namespace Infrastructure.Data.Migrations
                         .HasPrecision(18, 9)
                         .HasColumnType("decimal(18,9)");
 
-                    b.Property<decimal>("Latitude")
-                        .HasPrecision(18, 9)
-                        .HasColumnType("decimal(18,9)");
-
-                    b.Property<decimal>("Longitude")
-                        .HasPrecision(18, 9)
-                        .HasColumnType("decimal(18,9)");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");

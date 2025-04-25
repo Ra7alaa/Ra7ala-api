@@ -57,6 +57,7 @@ namespace Infrastructure.Data.DataSeed
                 await SeedDriversAsync(driverPassword);
                 await SeedPassengersAsync(passengerPassword);
                 await SeedCitiesAsync();
+                await SeedStationsAsync();
                 
                 _logger.LogInformation("Database seeding completed successfully!");
             }
