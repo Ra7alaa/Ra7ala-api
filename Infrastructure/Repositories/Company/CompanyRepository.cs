@@ -29,17 +29,12 @@ namespace Infrastructure.Repositories.Company
                 .Include(c => c.Drivers)
                 .Include(c => c.Buses)
                 .Include(c => c.Routes)
+                .Include(c => c.Feedbacks)
                 .Include(c => c.SuperAdmin)
                 .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
         }
 
-        public async Task<Domain.Entities.Company?> GetCompanyWithRatingsAsync(int id)
-        {
-            return await _context.Set<Domain.Entities.Company>()
-                .Include(c => c.Feedbacks)
-                    .ThenInclude(f => f.Passenger)
-                .FirstOrDefaultAsync(c => c.Id == id);
-        }
+       
 
         // Get paginated list of companies with optional filter
         public async Task<(IEnumerable<Domain.Entities.Company> Companies, int TotalCount)> GetPagedCompaniesAsync(
@@ -93,8 +88,17 @@ namespace Infrastructure.Repositories.Company
             return true;
         }
 
+        // Retrieves a company by its ID, with its feedbacks and the passengers who submitted them
+        public async Task<Domain.Entities.Company?> GetCompanyWithRatingsAsync(int id)
+        {
+            return await _context.Set<Domain.Entities.Company>()
+                .Include(c => c.Feedbacks)
+                .ThenInclude(f => f.Passenger)
+                .FirstOrDefaultAsync(c => c.Id == id);
+        }
+       
         // Update the company's rating based on the company ID and the new rating
-        public async Task<bool> UpdateCompanyRatingAsync(int companyId, double newRating)
+        public async Task<bool> UpdateCompanyRatingAsync(int companyId)
         {
             var company = await _context.Set<Domain.Entities.Company>()
                 .FirstOrDefaultAsync(c => c.Id == companyId);
@@ -102,14 +106,25 @@ namespace Infrastructure.Repositories.Company
             if (company == null)
                 return false;
 
-            company.AverageRating = newRating;
-            company.TotalRatings = await _context.Set<CompanyFeedback>()
-                .CountAsync(f => f.CompanyId == companyId);
+            var feedbacks = await _context.Set<CompanyFeedback>()
+                .Where(f => f.CompanyId == companyId)
+                .ToListAsync();
+
+            if (!feedbacks.Any())
+            {
+                company.AverageRating = 0;
+                company.TotalRatings = 0;
+            }
+            else
+            {
+                company.AverageRating = feedbacks.Average(f => f.Rating);
+                company.TotalRatings = feedbacks.Count;
+            }
 
             await _context.SaveChangesAsync();
             return true;
         }
-
+    
         // Get the average rating of a company
        public async Task<int> GetAverageRatingAsync(int companyId)
         {
@@ -118,17 +133,17 @@ namespace Infrastructure.Repositories.Company
                 .ToListAsync();
             
             if (!feedbacks.Any())
-                return 1; 
+                return 0; 
                 
             double averageRating = feedbacks.Average(f => f.Rating);
-            averageRating = Math.Max(1, averageRating);
+            averageRating = Math.Max(0, averageRating);
             int starRating = (int)Math.Round(averageRating);
             starRating = Math.Min(5, starRating);
             
             return starRating;
         }
 
-        // Check if a company exists by name and email
+        // Check if a company exists that matches the given condition
        public async Task<bool> ExistsAsync(Expression<Func<Domain.Entities.Company, bool>> predicate)
         {
             return await _context.Set<Domain.Entities.Company>().AnyAsync(predicate);

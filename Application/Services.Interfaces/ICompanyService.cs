@@ -39,9 +39,9 @@ namespace Application.Services.Interfaces
         Task<CompanyDto> ReviewCompanyRegistrationAsync(ReviewCompanyDto reviewDto);
 
         // Allows users to rate a company and add a comment.
-        Task<CompanyDto> RateCompanyAsync(int companyId, int rating, string? comment, string userId);
+        Task RateCompanyAsync(int companyId, int rating, string? comment, string userId);
 
         // Calculates the average rating for a given company.
-        Task<double> GetCompanyAverageRatingAsync(int companyId);
+        Task<int> GetCompanyAverageRatingAsync(int companyId);
     }
 }

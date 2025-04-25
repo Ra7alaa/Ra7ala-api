@@ -25,16 +25,16 @@ namespace Domain.Repositories.Interfaces
             int pageSize,
             Expression<Func<Company, bool>>? filter = null);
 
-       
+        // Retrieves a company by its ID, with its feedbacks and the passengers who submitted them
         Task<Company?> GetCompanyWithRatingsAsync(int id);
 
         // Update the company's rating based on the company ID and the new rating
-        Task<bool> UpdateCompanyRatingAsync(int companyId, double newRating);
+        Task<bool> UpdateCompanyRatingAsync(int companyId);
 
         // Get the average rating of a company
         Task<int> GetAverageRatingAsync(int companyId);
     
-        // Check if a company exists by name and email
+        // Check if a company exists that matches the given condition
         Task<bool> ExistsAsync(Expression<Func<Company, bool>> predicate);
     }
 }

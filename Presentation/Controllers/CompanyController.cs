@@ -51,7 +51,7 @@ namespace Presentation.Controllers
                 //         return StatusCode(500, $"Error details: {ex.Message}, Stack: {ex.StackTrace}");
                 //     }
                 //     return StatusCode(500, "An error occurred while creating the company");
-                return StatusCode(500, ex.InnerException?.Message ?? ex.Message);
+                return StatusCode(500, "An error occurred while creating the company");
             }
         }
 
@@ -312,30 +312,32 @@ namespace Presentation.Controllers
         }
 
        
-        // Rate a company
+        // Add Feedback
         // [SwaggerOperation(
-        //     Summary = "Rate a company",
+        //     Summary = "Add Feedback",
         //     Description = "Allows a passenger to rate and comment on a company.",
-        //     OperationId = "RateCompany",
+        //     OperationId = "AddFeedback",
         //     Tags = new[] { "Company Rating" }
         // )]
-        [HttpPost("{id}/rate")]
+        [HttpPost("{companyId}/feedback")]
         // [Authorize(Roles = "Passenger")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<CompanyDto>> RateCompany(
-            int id,
-            [FromBody] RateCompanyDto rateDto)
+        public async Task<ActionResult> AddFeedback(
+            [FromRoute] int companyId,
+            [FromBody] RateCompanyDto  rateDto)
         {
             try
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
                 if (string.IsNullOrEmpty(userId))
                     return Unauthorized("User not authenticated");
 
-                var company = await _companyService.RateCompanyAsync(id, rateDto.Rating, rateDto.Comment, userId);
-                return Ok(company);
+                await _companyService.RateCompanyAsync(companyId, rateDto.Rating, rateDto.Comment, userId);
+
+                return NoContent();
             }
             catch (ArgumentException ex)
             {
@@ -347,7 +349,7 @@ namespace Presentation.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error rating company {Id}", id);
+                _logger.LogError(ex, "Error rating company {CompanyId}", companyId);
                 return StatusCode(500, "An error occurred while rating the company");
             }
         }

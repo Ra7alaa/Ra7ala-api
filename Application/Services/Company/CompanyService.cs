@@ -114,7 +114,7 @@ namespace Application.Services
             }
         }
 
-            // Fix for the GetPendingCompaniesAsync method
+        // Fix for the GetPendingCompaniesAsync method
         public async Task<CompanyListResponseDto> GetPendingCompaniesAsync(int pageNumber = 1, int pageSize = 10)
         {
             var filter = new CompanyFilterDto { IsApproved = false, IsRejected = false, IsDeleted = false };
@@ -227,39 +227,6 @@ namespace Application.Services
             return true;
         }
 
-        // Allows users to rate a company and add a comment.
-        public async Task<CompanyDto> RateCompanyAsync(int companyId, int rating, string? comment, string userId)
-        {
-            if (rating < 1 || rating > 5)
-                throw new ArgumentException("Rating must be between 1 and 5");
-
-            var company = await _unitOfWork.CompanyRepository.GetCompanyWithRatingsAsync(companyId);
-            if (company == null)
-                throw new KeyNotFoundException($"Company with ID {companyId} not found");
-
-            var companyFeedback = new CompanyFeedback
-            {
-                CompanyId = companyId,
-                PassengerId = userId, // Keep as string since it's the AppUser Id
-                Rating = rating,
-                Comment = comment ?? string.Empty,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            await _unitOfWork.CompanyRepository.UpdateCompanyRatingAsync(companyId, rating);
-            // Add the feedback to the company's feedback collection
-            company.Feedbacks.Add(companyFeedback);
-            await _unitOfWork.SaveChangesAsync();
-
-            return MapToCompanyDto(company);
-        }
-
-        // Calculates the average rating for a given company.
-        public async Task<double> GetCompanyAverageRatingAsync(int companyId)
-        {
-            return await _unitOfWork.CompanyRepository.GetAverageRatingAsync(companyId);
-        }
-
         // Reviews a company's registration based on the provided details.
         public async Task<CompanyDto> ReviewCompanyRegistrationAsync(ReviewCompanyDto reviewDto)
         {
@@ -280,6 +247,36 @@ namespace Application.Services
 
             await _unitOfWork.SaveChangesAsync();
             return MapToCompanyDto(company);
+        }
+
+        // Allows users to rate a company and add a comment.
+        public async Task RateCompanyAsync(int companyId, int rating, string? comment, string userId)
+        {
+            if (rating < 1 || rating > 5)
+                throw new ArgumentException("Rating must be between 1 and 5");
+
+            var company = await _unitOfWork.CompanyRepository.GetCompanyWithRatingsAsync(companyId);
+            if (company == null)
+                throw new KeyNotFoundException($"Company with ID {companyId} not found");
+
+            var companyFeedback = new CompanyFeedback
+            {
+                CompanyId = companyId,
+                PassengerId = userId, // Keep as string since it's the AppUser Id
+                Rating = rating,
+                Comment = comment ?? string.Empty,
+                CreatedAt = DateTime.UtcNow
+            };
+            company.Feedbacks.Add(companyFeedback);
+            await _unitOfWork.SaveChangesAsync();
+            await _unitOfWork.CompanyRepository.UpdateCompanyRatingAsync(companyId);
+
+        }
+
+        // Calculates the average rating for a given company.
+        public async Task<int> GetCompanyAverageRatingAsync(int companyId)
+        {
+            return await _unitOfWork.CompanyRepository.GetAverageRatingAsync(companyId);
         }
 
         //Private Methods
@@ -365,25 +362,25 @@ namespace Application.Services
             try
             {
                 var password = GenerateSecurePassword();
-                var admin = new AppUser
+                var superAdmin = new AppUser
                 {
-                    UserName = $"Superadmin_{company.Name.ToLower().Replace(" ", "_")}",
+                    UserName = $"Superadmin_{company.SuperAdminName.ToLower().Replace(" ", "_")}",
                     Email = company.SuperAdminEmail,
                     EmailConfirmed = true,
                     PhoneNumber = company.SuperAdminPhone,
                     UserType = UserType.Admin
                 };
 
-                var result = await _userManager.CreateAsync(admin, password);
+                var result = await _userManager.CreateAsync(superAdmin, password);
                 if (!result.Succeeded)
                 {
                     throw new Exception($"Failed to create admin account: {string.Join(", ", result.Errors)}");
                 }
 
-                await _userManager.AddToRoleAsync(admin, "SuperAdmin");
+                await _userManager.AddToRoleAsync(superAdmin, "SuperAdmin");
 
                 // Send email with credentials
-                await _emailService.SendAdminCredentialsEmailAsync(company.Name, admin.Email, admin.UserName, password);
+                await _emailService.SendAdminCredentialsEmailAsync(company.Name, superAdmin.Email, superAdmin.UserName, password);
             }
             catch (Exception ex)
             {

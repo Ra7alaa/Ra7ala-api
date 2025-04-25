@@ -45,8 +45,8 @@ namespace Domain.Entities
         public DateTime? ApprovedDate { get; set; }
 
         // Rating and Feedback
-        public double? AverageRating { get; set; }
-        public int? TotalRatings { get; set; }
+        public double? AverageRating { get; set; } = 0;
+        public int? TotalRatings { get; set; } = 0;
   
         // Navigation properties
         public SuperAdmin SuperAdmin { get; set; } = null!;
