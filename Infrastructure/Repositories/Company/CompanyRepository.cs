@@ -128,16 +128,17 @@ namespace Infrastructure.Repositories.Company
         // Get the average rating of a company
        public async Task<int> GetAverageRatingAsync(int companyId)
         {
-            var feedbacks = await _context.Set<CompanyFeedback>()
-                .Where(f => f.CompanyId == companyId)
-                .ToListAsync();
+            var company = await _context.Set<Domain.Entities.Company>()
+            .Where(c => c.Id == companyId && !c.IsDeleted)
+            .Select(c => c.AverageRating)
+            .FirstOrDefaultAsync();
             
-            if (!feedbacks.Any())
-                return 0; 
+            if (!company.HasValue)
+                return 0;
                 
-            double averageRating = feedbacks.Average(f => f.Rating);
-            averageRating = Math.Max(0, averageRating);
-            int starRating = (int)Math.Round(averageRating);
+            
+            var boundedRating = Math.Max(0, company.Value);
+            int starRating = (int)Math.Round(boundedRating);
             starRating = Math.Min(5, starRating);
             
             return starRating;
