@@ -43,5 +43,8 @@ namespace Application.Services.Interfaces
 
         // Calculates the average rating for a given company.
         Task<int> GetCompanyAverageRatingAsync(int companyId);
+
+        // Retrieves detailed ratings for a given company.
+        Task<CompanyRatingsDto> GetCompanyRatingsDetailsAsync(int companyId);
     }
 }

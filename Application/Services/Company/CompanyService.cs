@@ -279,6 +279,32 @@ namespace Application.Services
             return await _unitOfWork.CompanyRepository.GetAverageRatingAsync(companyId);
         }
 
+        // Retrieves detailed ratings for a given company.
+        public async Task<CompanyRatingsDto> GetCompanyRatingsDetailsAsync(int companyId)
+        {
+            var company = await _unitOfWork.CompanyRepository.GetCompanyWithRatingsAsync(companyId);
+
+            if (company == null)
+                throw new KeyNotFoundException($"Company with ID {companyId} not found");
+
+            return new CompanyRatingsDto
+            {
+                CompanyId = company.Id,
+                CompanyName = company.Name,
+                AverageRating = company.AverageRating ?? 0,
+                TotalRatings = company.TotalRatings ?? 0,
+                Feedbacks = company.Feedbacks.Select(f => new FeedbackDto
+                {
+                    Id = f.Id,
+                    PassengerName = f.Passenger?.FullName ?? "Unknown",
+                    PassengerEmail = f.Passenger?.Email ?? "Unknown",
+                    Rating = f.Rating,
+                    Comment = f.Comment,
+                    CreatedAt = f.CreatedAt
+                }).ToList()
+            };
+        }
+
         //Private Methods
         private Expression<Func<T, bool>> CombinePredicates<T>(Expression<Func<T, bool>> first, Expression<Func<T, bool>> second)
         {

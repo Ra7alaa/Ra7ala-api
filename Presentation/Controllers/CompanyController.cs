@@ -11,7 +11,7 @@ namespace Presentation.Controllers
     [Route("api/[controller]")]
     public class CompanyController : ControllerBase
     {
-       private readonly ICompanyService _companyService;
+        private readonly ICompanyService _companyService;
         private readonly ILogger<CompanyController> _logger;
 
         public CompanyController(
@@ -55,7 +55,7 @@ namespace Presentation.Controllers
             }
         }
 
-          // Get all companies with pagination   
+        // Get all companies with pagination   
         // [SwaggerOperation(
         //     Summary = "Get all companies",
         //     Description = "Returns a paginated list of all companies.",
@@ -81,7 +81,7 @@ namespace Presentation.Controllers
             }
         }
 
-        
+
         // Get pending companies awaiting approval
         // [SwaggerOperation(
         //     Summary = "Get pending companies",
@@ -92,7 +92,7 @@ namespace Presentation.Controllers
         [HttpGet("pending")]
         // [Authorize(Roles = "Owner")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-       public async Task<ActionResult<CompanyListResponseDto>> GetPendingCompanies(
+        public async Task<ActionResult<CompanyListResponseDto>> GetPendingCompanies(
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10)
         {
@@ -118,7 +118,7 @@ namespace Presentation.Controllers
         [HttpGet("approved")]
         // [Authorize(Roles = "Owner")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-       public async Task<ActionResult<CompanyListResponseDto>> GetApprovedCompanies(
+        public async Task<ActionResult<CompanyListResponseDto>> GetApprovedCompanies(
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10)
         {
@@ -205,7 +205,7 @@ namespace Presentation.Controllers
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-       
+
         public async Task<ActionResult<CompanyDto>> GetCompany(int id)
         {
             try
@@ -253,8 +253,8 @@ namespace Presentation.Controllers
                 return StatusCode(500, "An error occurred while updating the company");
             }
         }
-        
-         // Review a company registration (approve or reject)
+
+        // Review a company registration (approve or reject)
         // [SwaggerOperation(
         //     Summary = "Review company registration",
         //     Description = "Allows admin/owner to approve or reject company registration.",
@@ -284,12 +284,12 @@ namespace Presentation.Controllers
         }
 
         // Delete a company (soft delete)
-    //     [SwaggerOperation(
-    //        Summary = "Delete a company",
-    //        Description = "Soft deletes a company by setting deletion flags. Only accessible by authorized roles.",
-    //        OperationId = "DeleteCompany",
-    //        Tags = new[] { "Company Management" }
-    //    )]
+        //     [SwaggerOperation(
+        //        Summary = "Delete a company",
+        //        Description = "Soft deletes a company by setting deletion flags. Only accessible by authorized roles.",
+        //        OperationId = "DeleteCompany",
+        //        Tags = new[] { "Company Management" }
+        //    )]
         [HttpDelete("{id}")]
         // [Authorize(Roles = "Owner")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -311,7 +311,7 @@ namespace Presentation.Controllers
             }
         }
 
-       
+
         // Add Feedback
         // [SwaggerOperation(
         //     Summary = "Add Feedback",
@@ -326,7 +326,7 @@ namespace Presentation.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> AddFeedback(
             [FromRoute] int companyId,
-            [FromBody] RateCompanyDto  rateDto)
+            [FromBody] RateCompanyDto rateDto)
         {
             try
             {
@@ -354,7 +354,7 @@ namespace Presentation.Controllers
             }
         }
 
-        
+
         // Get average rating for a company
         // [SwaggerOperation(
         //     Summary = "Get average company rating",
@@ -379,6 +379,34 @@ namespace Presentation.Controllers
                 return StatusCode(500, "An error occurred while retrieving the company rating");
             }
         }
+        
+        [HttpGet("{id}/ratings-details")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<ActionResult<CompanyRatingsDto>> GetCompanyRatingsDetails(int id)
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized();
+
+                var ratings = await _companyService.GetCompanyRatingsDetailsAsync(id);
+                return Ok(ratings);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving ratings details for company {Id}", id);
+                return StatusCode(500, "An error occurred while retrieving the company ratings");
+            }
+        }
+
     }
 
     }
