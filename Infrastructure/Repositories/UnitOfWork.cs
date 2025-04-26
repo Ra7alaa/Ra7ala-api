@@ -38,10 +38,7 @@ namespace Infrastructure.Repositories
 
         public IStationRepository Stations => 
             _stationsRepository ??= new StationRepository(_context);
-
-        public IGenericRepository<Company> Companies => 
-            _companiesRepository ??= new GenericRepository<Company>(_context);
-            
+ 
         public IUserRepository Users => 
             _userRepository ??= new UserRepository(_context, _userManager, _signInManager);
 

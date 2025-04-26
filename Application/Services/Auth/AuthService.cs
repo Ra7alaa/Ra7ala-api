@@ -228,7 +228,7 @@ namespace Application.Services.Auth
             await _unitOfWork.SaveChangesAsync();
 
             // Get company name for the email
-            var company = await _unitOfWork.Companies.GetByIdAsync(superAdminDto.CompanyId);
+            var company = await _unitOfWork.CompanyRepository.GetCompanyByIdAsync(superAdminDto.CompanyId);
             string companyName = company?.Name ?? "Ra7ala Company";
 
             // Send email with credentials

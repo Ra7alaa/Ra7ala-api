@@ -64,7 +64,7 @@ namespace Presentation.Controllers
         // )]
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        // [Authorize(Roles = "Owner")]
+        [Authorize(Roles = "Owner")]
         public async Task<ActionResult<CompanyListResponseDto>> GetCompanies(
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10)
@@ -90,7 +90,7 @@ namespace Presentation.Controllers
         //     Tags = new[] { "Company Approval" }
         // )]
         [HttpGet("pending")]
-        // [Authorize(Roles = "Owner")]
+        [Authorize(Roles = "Owner")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<CompanyListResponseDto>> GetPendingCompanies(
             [FromQuery] int pageNumber = 1,
@@ -116,7 +116,7 @@ namespace Presentation.Controllers
         //     Tags = new[] { "Company Approval" }
         // )]
         [HttpGet("approved")]
-        // [Authorize(Roles = "Owner")]
+        [Authorize(Roles = "Owner")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<CompanyListResponseDto>> GetApprovedCompanies(
             [FromQuery] int pageNumber = 1,
@@ -142,7 +142,7 @@ namespace Presentation.Controllers
         //     Tags = new[] { "Company Approval" }
         // )]
         [HttpGet("rejected")]
-        // [Authorize(Roles = "Owner")]
+        [Authorize(Roles = "Owner")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<CompanyListResponseDto>> GetRejectedCompanies(
             [FromQuery] int pageNumber = 1,
@@ -260,7 +260,7 @@ namespace Presentation.Controllers
         //     Tags = new[] { "Company Management" }
         // )]
         [HttpGet("{id}/admin-profile")]
-        //[Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -298,7 +298,7 @@ namespace Presentation.Controllers
         //     Tags = new[] { "Company Management" }
         // )]
         [HttpPut("{id}")]
-        // [Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -328,7 +328,7 @@ namespace Presentation.Controllers
         //     Tags = new[] { "Company Approval" }
         // )]
         [HttpPost("review")]
-        // [Authorize(Roles = "Owner")]
+        [Authorize(Roles = "Owner")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<CompanyDto>> ReviewCompany([FromBody] ReviewCompanyDto reviewDto)
@@ -357,7 +357,7 @@ namespace Presentation.Controllers
         //        Tags = new[] { "Company Management" }
         //    )]
         [HttpDelete("{id}")]
-        // [Authorize(Roles = "Owner")]
+        [Authorize(Roles = "Owner")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> DeleteCompany(int id)
@@ -373,7 +373,7 @@ namespace Presentation.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting company {Id}", id);
-                return StatusCode(500, "An error occurred while deleting the company");
+                return StatusCode(500, ex.InnerException != null ? ex.InnerException.Message : "An error occurred while deleting the company");
             }
         }
 
@@ -386,7 +386,7 @@ namespace Presentation.Controllers
         //     Tags = new[] { "Company Rating" }
         // )]
         [HttpPost("{companyId}/feedback")]
-        // [Authorize(Roles = "Passenger")]
+        [Authorize(Roles = "Passenger")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -454,7 +454,7 @@ namespace Presentation.Controllers
         //     Tags = new[] { "Company Rating" }
         // )]
         [HttpGet("{id}/ratings-details")]
-        //[Authorize(Roles = "Admin,SuperAdmin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]

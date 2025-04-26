@@ -16,12 +16,13 @@ namespace Domain.Entities
         public int Capacity { get; set; }
         public string Model { get; set; }
         public int YearOfManufacture { get; set; }
+        public bool IsDeleted { get; set; } = false;
         public string Status { get; set; }
        // public Point CurrentLocation { get; set; } // Real-time location
         public bool IsActive { get; set; } = true;
         public int CompanyId { get; set; }
         public string AmenityDescription { get; set; } // AC, WiFi, etc.
-
+       
         // Navigation properties
         public virtual Company Company { get; set; }
         // public virtual ICollection<Trip> Trips { get; set; } = new List<Trip>();
