@@ -544,6 +544,392 @@ namespace Application.Services.Auth
 
         #endregion
 
+        #region Update Methods
+
+        public async Task<ServiceResult> UpdateSuperAdminAsync(ClaimsPrincipal user, string? superAdminId, UpdateSuperAdminDto updateSuperAdminDto)
+        {
+            // Authentication validation checks
+            if (user == null || !user.Identity.IsAuthenticated)
+            {
+                return ServiceResult.Failure("Authentication required");
+            }
+
+            // Get the current user's ID
+            var currentUserId = _userManager.GetUserId(user);
+            
+            if (currentUserId == null)
+            {
+                return ServiceResult.Failure("User ID not found in authentication token");
+            }
+
+            // Get role claims to validate the user is a SuperAdmin
+            var roles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+            if (!roles.Contains("SuperAdmin"))
+            {
+                return ServiceResult.Failure($"User is not authorized to update SuperAdmin information");
+            }
+
+            string userIdToUpdate;
+            
+            // If superAdminId is provided, check if the current user has permission to update that ID
+            if (!string.IsNullOrEmpty(superAdminId) && superAdminId != currentUserId)
+            {
+                // Only allow a SuperAdmin to update another SuperAdmin if they're from the same company
+                var currentSuperAdmin = await _unitOfWork.Users.GetSuperAdminByUserIdAsync(currentUserId);
+                var targetSuperAdmin = await _unitOfWork.Users.GetSuperAdminByUserIdAsync(superAdminId);
+                
+                if (currentSuperAdmin == null || targetSuperAdmin == null || currentSuperAdmin.CompanyId != targetSuperAdmin.CompanyId)
+                {
+                    return ServiceResult.Failure("You are not authorized to update this SuperAdmin");
+                }
+                
+                userIdToUpdate = superAdminId;
+            }
+            else
+            {
+                userIdToUpdate = currentUserId;
+            }
+            
+            // Get the user to update
+            var appUser = await _userManager.FindByIdAsync(userIdToUpdate);
+            if (appUser == null)
+            {
+                return ServiceResult.Failure("User not found");
+            }
+            
+            // Update basic user information
+            appUser.FullName = updateSuperAdminDto.FullName;
+            appUser.PhoneNumber = updateSuperAdminDto.PhoneNumber;
+            appUser.DateOfBirth = updateSuperAdminDto.DateOfBirth;
+            appUser.Address = updateSuperAdminDto.Address;
+            
+            // Handle profile picture if provided
+            if (updateSuperAdminDto.ProfilePicture != null && updateSuperAdminDto.ProfilePicture.Length > 0)
+            {
+                // Delete old profile picture if it exists
+                if (!string.IsNullOrEmpty(appUser.ProfilePictureUrl))
+                {
+                    _fileService.DeleteFile(appUser.ProfilePictureUrl);
+                }
+                
+                // Save new profile picture
+                string profilePicPath = await _fileService.SaveFileAsync(updateSuperAdminDto.ProfilePicture, "ProfilePictures");
+                appUser.ProfilePictureUrl = profilePicPath;
+            }
+            
+            // Save changes to AppUser
+            var result = await _userManager.UpdateAsync(appUser);
+            
+            if (!result.Succeeded)
+            {
+                return ServiceResult.Failure(result.Errors.Select(e => e.Description));
+            }
+            
+            return ServiceResult.Success();
+        }
+
+        public async Task<ServiceResult> UpdateAdminAsync(ClaimsPrincipal user, string? adminId, UpdateAdminDto updateAdminDto)
+        {
+            // Authentication validation checks
+            if (user == null || !user.Identity.IsAuthenticated)
+            {
+                return ServiceResult.Failure("Authentication required");
+            }
+
+            // Get the current user's ID
+            var currentUserId = _userManager.GetUserId(user);
+            
+            if (currentUserId == null)
+            {
+                return ServiceResult.Failure("User ID not found in authentication token");
+            }
+
+            // Get role claims 
+            var roles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+            
+            string userIdToUpdate;
+            
+            // If adminId is provided, check if the current user has permission to update that ID
+            if (!string.IsNullOrEmpty(adminId) && adminId != currentUserId)
+            {
+                // Check if the current user is an admin
+                if (!roles.Contains("Admin") && !roles.Contains("SuperAdmin"))
+                {
+                    return ServiceResult.Failure("User is not authorized to update Admin information");
+                }
+                
+                // If user is a SuperAdmin, they can update any admin in their company
+                if (roles.Contains("SuperAdmin"))
+                {
+                    var superAdmin = await _unitOfWork.Users.GetSuperAdminByUserIdAsync(currentUserId);
+                    var targetAdmin = await _unitOfWork.Users.GetAdminByUserIdAsync(adminId);
+                    
+                    if (superAdmin == null || targetAdmin == null || superAdmin.CompanyId != targetAdmin.CompanyId)
+                    {
+                        return ServiceResult.Failure("You are not authorized to update this Admin");
+                    }
+                }
+                // If user is an Admin, they can't update other admins
+                else
+                {
+                    return ServiceResult.Failure("Admins can only update their own information");
+                }
+                
+                userIdToUpdate = adminId;
+            }
+            else
+            {
+                // User is updating their own profile
+                if (!roles.Contains("Admin"))
+                {
+                    return ServiceResult.Failure("User is not an Admin");
+                }
+                
+                userIdToUpdate = currentUserId;
+            }
+            
+            // Get the user to update
+            var appUser = await _userManager.FindByIdAsync(userIdToUpdate);
+            if (appUser == null)
+            {
+                return ServiceResult.Failure("User not found");
+            }
+            
+            // Update basic user information
+            appUser.FullName = updateAdminDto.FullName;
+            appUser.PhoneNumber = updateAdminDto.PhoneNumber;
+            appUser.DateOfBirth = updateAdminDto.DateOfBirth;
+            appUser.Address = updateAdminDto.Address;
+            
+            // Handle profile picture if provided
+            if (updateAdminDto.ProfilePicture != null && updateAdminDto.ProfilePicture.Length > 0)
+            {
+                // Delete old profile picture if it exists
+                if (!string.IsNullOrEmpty(appUser.ProfilePictureUrl))
+                {
+                    _fileService.DeleteFile(appUser.ProfilePictureUrl);
+                }
+                
+                // Save new profile picture
+                string profilePicPath = await _fileService.SaveFileAsync(updateAdminDto.ProfilePicture, "ProfilePictures");
+                appUser.ProfilePictureUrl = profilePicPath;
+            }
+            
+            // Save changes to AppUser
+            var result = await _userManager.UpdateAsync(appUser);
+            
+            if (!result.Succeeded)
+            {
+                return ServiceResult.Failure(result.Errors.Select(e => e.Description));
+            }
+            
+            // Update Admin entity if department is provided and not empty
+            if (!string.IsNullOrEmpty(updateAdminDto.Department))
+            {
+                var admin = await _unitOfWork.Users.GetAdminByUserIdAsync(userIdToUpdate);
+                if (admin != null)
+                {
+                    admin.Department = updateAdminDto.Department;
+                    await _unitOfWork.SaveChangesAsync();
+                }
+            }
+            
+            return ServiceResult.Success();
+        }
+
+        public async Task<ServiceResult> UpdatePassengerAsync(ClaimsPrincipal user, UpdatePassengerDto updatePassengerDto)
+        {
+            // Authentication validation checks
+            if (user == null || !user.Identity.IsAuthenticated)
+            {
+                return ServiceResult.Failure("Authentication required");
+            }
+
+            // Get the current user's ID
+            var userId = _userManager.GetUserId(user);
+            
+            if (userId == null)
+            {
+                return ServiceResult.Failure("User ID not found in authentication token");
+            }
+
+            // Get role claims to validate the user is a Passenger
+            var roles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+            if (!roles.Contains("Passenger"))
+            {
+                return ServiceResult.Failure("User is not a Passenger");
+            }
+            
+            // Get the user to update
+            var appUser = await _userManager.FindByIdAsync(userId);
+            if (appUser == null)
+            {
+                return ServiceResult.Failure("User not found");
+            }
+            
+            // Update basic user information
+            appUser.FullName = updatePassengerDto.FullName;
+            appUser.PhoneNumber = updatePassengerDto.PhoneNumber;
+            appUser.DateOfBirth = updatePassengerDto.DateOfBirth;
+            appUser.Address = updatePassengerDto.Address;
+            
+            // Handle profile picture if provided
+            if (updatePassengerDto.ProfilePicture != null && updatePassengerDto.ProfilePicture.Length > 0)
+            {
+                // Delete old profile picture if it exists
+                if (!string.IsNullOrEmpty(appUser.ProfilePictureUrl))
+                {
+                    _fileService.DeleteFile(appUser.ProfilePictureUrl);
+                }
+                
+                // Save new profile picture
+                string profilePicPath = await _fileService.SaveFileAsync(updatePassengerDto.ProfilePicture, "ProfilePictures");
+                appUser.ProfilePictureUrl = profilePicPath;
+            }
+            
+            // Save changes to AppUser
+            var result = await _userManager.UpdateAsync(appUser);
+            
+            if (!result.Succeeded)
+            {
+                return ServiceResult.Failure(result.Errors.Select(e => e.Description));
+            }
+            
+            return ServiceResult.Success();
+        }
+
+        public async Task<ServiceResult> UpdateDriverAsync(ClaimsPrincipal user, string? driverId, UpdateDriverDto updateDriverDto)
+        {
+            // Authentication validation checks
+            if (user == null || !user.Identity.IsAuthenticated)
+            {
+                return ServiceResult.Failure("Authentication required");
+            }
+
+            // Get the current user's ID
+            var currentUserId = _userManager.GetUserId(user);
+            
+            if (currentUserId == null)
+            {
+                return ServiceResult.Failure("User ID not found in authentication token");
+            }
+
+            // Get role claims
+            var roles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+            
+            string userIdToUpdate;
+            
+            // If driverId is provided, check if the current user has permission to update that ID
+            if (!string.IsNullOrEmpty(driverId) && driverId != currentUserId)
+            {
+                // Only SuperAdmin or Admin can update other drivers
+                if (!roles.Contains("SuperAdmin") && !roles.Contains("Admin"))
+                {
+                    return ServiceResult.Failure("User is not authorized to update Driver information");
+                }
+                
+                // Check if the driver belongs to the same company as the SuperAdmin/Admin
+                var company = -1;
+                
+                if (roles.Contains("SuperAdmin"))
+                {
+                    var superAdmin = await _unitOfWork.Users.GetSuperAdminByUserIdAsync(currentUserId);
+                    if (superAdmin != null)
+                    {
+                        company = superAdmin.CompanyId;
+                    }
+                }
+                else // Admin
+                {
+                    var admin = await _unitOfWork.Users.GetAdminByUserIdAsync(currentUserId);
+                    if (admin != null)
+                    {
+                        company = admin.CompanyId;
+                    }
+                }
+                
+                var targetDriver = await _unitOfWork.Users.GetDriverByUserIdAsync(driverId);
+                
+                if (company == -1 || targetDriver == null || company != targetDriver.CompanyId)
+                {
+                    return ServiceResult.Failure("You are not authorized to update this Driver");
+                }
+                
+                userIdToUpdate = driverId;
+            }
+            else
+            {
+                // User is updating their own profile
+                if (!roles.Contains("Driver"))
+                {
+                    return ServiceResult.Failure("User is not a Driver");
+                }
+                
+                userIdToUpdate = currentUserId;
+            }
+            
+            // Get the user to update
+            var appUser = await _userManager.FindByIdAsync(userIdToUpdate);
+            if (appUser == null)
+            {
+                return ServiceResult.Failure("User not found");
+            }
+            
+            // Update basic user information
+            appUser.FullName = updateDriverDto.FullName;
+            appUser.PhoneNumber = updateDriverDto.PhoneNumber;
+            appUser.DateOfBirth = updateDriverDto.DateOfBirth;
+            appUser.Address = updateDriverDto.ContactAddress;
+            
+            // Handle profile picture if provided
+            if (updateDriverDto.ProfilePicture != null && updateDriverDto.ProfilePicture.Length > 0)
+            {
+                // Delete old profile picture if it exists
+                if (!string.IsNullOrEmpty(appUser.ProfilePictureUrl))
+                {
+                    _fileService.DeleteFile(appUser.ProfilePictureUrl);
+                }
+                
+                // Save new profile picture
+                string profilePicPath = await _fileService.SaveFileAsync(updateDriverDto.ProfilePicture, "ProfilePictures");
+                appUser.ProfilePictureUrl = profilePicPath;
+            }
+            
+            // Save changes to AppUser
+            var result = await _userManager.UpdateAsync(appUser);
+            
+            if (!result.Succeeded)
+            {
+                return ServiceResult.Failure(result.Errors.Select(e => e.Description));
+            }
+            
+            // Update Driver entity specifics
+            var driver = await _unitOfWork.Users.GetDriverByUserIdAsync(userIdToUpdate);
+            if (driver != null)
+            {
+                if (!string.IsNullOrEmpty(updateDriverDto.LicenseNumber))
+                {
+                    driver.LicenseNumber = updateDriverDto.LicenseNumber;
+                }
+                
+                if (!string.IsNullOrEmpty(updateDriverDto.ContactAddress))
+                {
+                    driver.ContactAddress = updateDriverDto.ContactAddress;
+                }
+                
+                if (updateDriverDto.LicenseExpiryDate.HasValue)
+                {
+                    driver.LicenseExpiryDate = updateDriverDto.LicenseExpiryDate.Value;
+                }
+                
+                await _unitOfWork.SaveChangesAsync();
+            }
+            
+            return ServiceResult.Success();
+        }
+
+        #endregion
+
         #region Helper Methods
 
         private string GenerateRandomPassword()

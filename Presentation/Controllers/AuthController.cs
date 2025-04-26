@@ -137,5 +137,73 @@ namespace Presentation.Controllers
 
             return StatusCode(201, new ApiResponse(201, "Admin registered successfully"));
         }
+
+        [Authorize(Roles = "SuperAdmin")]
+        [HttpPut("update-super-admin")]
+        public async Task<ActionResult<ApiResponse>> UpdateSuperAdmin([FromQuery] string? superAdminId, [FromForm] UpdateSuperAdminDto updateSuperAdminDto)
+        {
+            var result = await _authService.UpdateSuperAdminAsync(User, superAdminId, updateSuperAdminDto);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(new ApiValidationErrorResponse 
+                { 
+                    Errors = result.Errors 
+                });
+            }
+
+            return Ok(new ApiResponse(200, "SuperAdmin updated successfully"));
+        }
+
+        [Authorize(Roles = "Admin,SuperAdmin")]
+        [HttpPut("update-admin")]
+        public async Task<ActionResult<ApiResponse>> UpdateAdmin([FromQuery] string? adminId, [FromForm] UpdateAdminDto updateAdminDto)
+        {
+            var result = await _authService.UpdateAdminAsync(User, adminId, updateAdminDto);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(new ApiValidationErrorResponse 
+                { 
+                    Errors = result.Errors 
+                });
+            }
+
+            return Ok(new ApiResponse(200, "Admin updated successfully"));
+        }
+
+        [Authorize(Roles = "Passenger")]
+        [HttpPut("update-passenger")]
+        public async Task<ActionResult<ApiResponse>> UpdatePassenger([FromForm] UpdatePassengerDto updatePassengerDto)
+        {
+            var result = await _authService.UpdatePassengerAsync(User, updatePassengerDto);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(new ApiValidationErrorResponse 
+                { 
+                    Errors = result.Errors 
+                });
+            }
+
+            return Ok(new ApiResponse(200, "Passenger updated successfully"));
+        }
+
+        [Authorize(Roles = "Driver,Admin,SuperAdmin")]
+        [HttpPut("update-driver")]
+        public async Task<ActionResult<ApiResponse>> UpdateDriver([FromQuery] string? driverId, [FromForm] UpdateDriverDto updateDriverDto)
+        {
+            var result = await _authService.UpdateDriverAsync(User, driverId, updateDriverDto);
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(new ApiValidationErrorResponse 
+                { 
+                    Errors = result.Errors 
+                });
+            }
+
+            return Ok(new ApiResponse(200, "Driver updated successfully"));
+        }
     }
 }
