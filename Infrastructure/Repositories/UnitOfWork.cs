@@ -1,6 +1,7 @@
 using Domain.Entities;
 using Domain.Repositories.Interfaces;
 using Infrastructure.Data;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Threading.Tasks;
 
@@ -9,13 +10,21 @@ namespace Infrastructure.Repositories
     public class UnitOfWork : IUnitOfWork, IDisposable
     {
         private readonly ApplicationDbContext _context;
-        private ICityRepository _citiesRepository;
-        private IStationRepository _stationsRepository;
-        private IGenericRepository<Company> _companiesRepository;
+        private readonly UserManager<AppUser> _userManager;
+        private readonly SignInManager<AppUser> _signInManager;
+        private ICityRepository? _citiesRepository;
+        private IStationRepository? _stationsRepository;
+        private IGenericRepository<Company>? _companiesRepository;
+        private IUserRepository? _userRepository;
 
-        public UnitOfWork(ApplicationDbContext context)
+        public UnitOfWork(
+            ApplicationDbContext context,
+            UserManager<AppUser> userManager,
+            SignInManager<AppUser> signInManager)
         {
             _context = context;
+            _userManager = userManager;
+            _signInManager = signInManager;
         }
 
         public ICityRepository Cities => 
@@ -26,6 +35,14 @@ namespace Infrastructure.Repositories
 
         public IGenericRepository<Company> Companies => 
             _companiesRepository ??= new GenericRepository<Company>(_context);
+            
+        public IUserRepository Users => 
+            _userRepository ??= new UserRepository(_context, _userManager, _signInManager);
+
+        public void Add<T>(T entity) where T : class
+        {
+            _context.Set<T>().Add(entity);
+        }
 
         public async Task<int> SaveChangesAsync()
         {

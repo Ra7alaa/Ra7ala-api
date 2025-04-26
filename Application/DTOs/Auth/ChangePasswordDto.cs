@@ -2,14 +2,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Application.DTOs.Auth
 {
-    public class ResetPasswordDto
+    public class ChangePasswordDto
     {
         [Required]
-        [EmailAddress]
-        public string Email { get; set; } = string.Empty;
-
-        [Required]
-        public string Token { get; set; } = string.Empty;
+        [DataType(DataType.Password)]
+        public string CurrentPassword { get; set; } = string.Empty;
 
         [Required]
         [StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 6)]
@@ -17,7 +14,7 @@ namespace Application.DTOs.Auth
         public string NewPassword { get; set; } = string.Empty;
 
         [DataType(DataType.Password)]
-        [Compare("NewPassword", ErrorMessage = "The password and confirmation password do not match.")]
+        [Compare("NewPassword", ErrorMessage = "The new password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; } = string.Empty;
     }
 }

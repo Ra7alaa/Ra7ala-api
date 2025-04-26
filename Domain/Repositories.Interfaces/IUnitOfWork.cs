@@ -8,7 +8,9 @@ namespace Domain.Repositories.Interfaces
         ICityRepository Cities { get; }
         IStationRepository Stations { get; } // تم تغييرها من IGenericRepository<Station> إلى IStationRepository
         IGenericRepository<Company> Companies { get; }
+        IUserRepository Users { get; }
         
+        void Add<T>(T entity) where T : class;
         Task<int> SaveChangesAsync();
     }
 }

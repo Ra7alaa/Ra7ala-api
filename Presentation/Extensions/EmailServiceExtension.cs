@@ -1,6 +1,7 @@
 using Application.Models;
 using Application.Services.Interfaces;
 using Infrastructure.ExternalServices;
+using Infrastructure.ExternalServices.EmailService;
 
 namespace Presentation.Extensions
 {
