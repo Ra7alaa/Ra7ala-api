@@ -12,11 +12,6 @@ namespace Infrastructure.Repositories
     {
         private readonly ApplicationDbContext _context;
         private bool _disposed;
-
-        // Generic repositories
-        private IGenericRepository<City> _citiesRepository;
-        private IGenericRepository<Station> _stationsRepository;
-        private IGenericRepository<Domain.Entities.Company> _companiesRepository;
         private ICompanyRepository _companyRepository;
 
         public UnitOfWork(ApplicationDbContext context)
@@ -24,20 +19,10 @@ namespace Infrastructure.Repositories
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        public IGenericRepository<City> Cities => 
-            _citiesRepository ??= new GenericRepository<City>(_context);
-
-        public IGenericRepository<Station> Stations => 
-            _stationsRepository ??= new GenericRepository<Station>(_context);
-
-        public IGenericRepository<Domain.Entities.Company> Companies => 
-            _companiesRepository ??= new GenericRepository<Domain.Entities.Company>(_context);
-
+        // Custom Repositories
         public ICompanyRepository CompanyRepository => 
             _companyRepository ??= new CompanyRepository(_context);
-
-    
-
+            
         public async Task<int> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync();
