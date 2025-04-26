@@ -46,6 +46,7 @@ namespace Presentation.Extensions
                         new List<string>()
                     }
                 });
+
             });
 
             return services;

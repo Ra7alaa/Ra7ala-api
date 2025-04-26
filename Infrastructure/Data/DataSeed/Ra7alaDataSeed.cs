@@ -58,7 +58,7 @@ namespace Infrastructure.Data.DataSeed
                 await SeedPassengersAsync(passengerPassword);
                 await SeedCitiesAsync();
                 await SeedStationsAsync();
-                
+
                 _logger.LogInformation("Database seeding completed successfully!");
             }
             catch (Exception ex)
@@ -127,6 +127,8 @@ namespace Infrastructure.Data.DataSeed
             {
                 _logger.LogInformation("Creating 5 companies");
                 
+                
+                // In SeedCompaniesWithSuperAdminsAsync method
                 var companies = new List<Company>
                 {
                     new Company
@@ -138,8 +140,15 @@ namespace Infrastructure.Data.DataSeed
                         Description = "Leading transportation company in Cairo",
                         LogoUrl = "cairo_transit_logo.png",
                         IsApproved = true,
+                        IsRejected = false,
+                        RejectionReason = string.Empty,
                         CreatedDate = DateTime.UtcNow.AddMonths(-6),
-                        ApprovedDate = DateTime.UtcNow.AddMonths(-6).AddDays(3)
+                        ApprovedDate = DateTime.UtcNow.AddMonths(-6).AddDays(3),
+                        AverageRating = 4.5,
+                        TotalRatings = 150,
+                        SuperAdminName = "Karim Hassan",
+                        SuperAdminEmail = "karim@cairotransit.com",
+                        SuperAdminPhone = "+20123456789"
                     },
                     new Company
                     {
@@ -150,8 +159,15 @@ namespace Infrastructure.Data.DataSeed
                         Description = "Premium transportation in Alexandria",
                         LogoUrl = "alex_rides_logo.png",
                         IsApproved = true,
+                        IsRejected = false,
+                        RejectionReason = string.Empty,
                         CreatedDate = DateTime.UtcNow.AddMonths(-5),
-                        ApprovedDate = DateTime.UtcNow.AddMonths(-5).AddDays(2)
+                        ApprovedDate = DateTime.UtcNow.AddMonths(-5).AddDays(2),
+                        AverageRating = 4.2,
+                        TotalRatings = 120,
+                        SuperAdminName = "Nour Ahmed",
+                        SuperAdminEmail = "nour@alexrides.com",
+                        SuperAdminPhone = "+20123456790"
                     },
                     new Company
                     {
@@ -162,8 +178,15 @@ namespace Infrastructure.Data.DataSeed
                         Description = "Serving the Delta region with quality transportation",
                         LogoUrl = "delta_transport_logo.png",
                         IsApproved = true,
+                        IsRejected = false,
+                        RejectionReason = string.Empty,
                         CreatedDate = DateTime.UtcNow.AddMonths(-4),
-                        ApprovedDate = DateTime.UtcNow.AddMonths(-4).AddDays(5)
+                        ApprovedDate = DateTime.UtcNow.AddMonths(-4).AddDays(5),
+                        AverageRating = 4.0,
+                        TotalRatings = 90,
+                        SuperAdminName = "Amr Mahmoud",
+                        SuperAdminEmail = "amr@deltatransport.com",
+                        SuperAdminPhone = "+20123456791"
                     },
                     new Company
                     {
@@ -174,8 +197,15 @@ namespace Infrastructure.Data.DataSeed
                         Description = "Tourist transportation in Upper Egypt",
                         LogoUrl = "luxor_travels_logo.png",
                         IsApproved = true,
+                        IsRejected = false,
+                        RejectionReason = string.Empty,
                         CreatedDate = DateTime.UtcNow.AddMonths(-3),
-                        ApprovedDate = DateTime.UtcNow.AddMonths(-3).AddDays(4)
+                        ApprovedDate = DateTime.UtcNow.AddMonths(-3).AddDays(4),
+                        AverageRating = 4.8,
+                        TotalRatings = 200,
+                        SuperAdminName = "Heba Ali",
+                        SuperAdminEmail = "heba@luxortravels.com",
+                        SuperAdminPhone = "+20123456792"
                     },
                     new Company
                     {
@@ -186,11 +216,17 @@ namespace Infrastructure.Data.DataSeed
                         Description = "Transportation solutions in Red Sea resorts",
                         LogoUrl = "red_sea_mobility_logo.png",
                         IsApproved = true,
+                        IsRejected = false,
+                        RejectionReason = string.Empty,
                         CreatedDate = DateTime.UtcNow.AddMonths(-2),
-                        ApprovedDate = DateTime.UtcNow.AddMonths(-2).AddDays(3)
+                        ApprovedDate = DateTime.UtcNow.AddMonths(-2).AddDays(3),
+                        AverageRating = 4.6,
+                        TotalRatings = 180,
+                        SuperAdminName = "Salem Mostafa",
+                        SuperAdminEmail = "salem@redseamobility.com",
+                        SuperAdminPhone = "+20123456793"
                     }
                 };
-
                 await _context.Companies.AddRangeAsync(companies);
                 await _context.SaveChangesAsync();
 

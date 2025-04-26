@@ -11,7 +11,7 @@ namespace Infrastructure.Data
             : base(options)
         {
         }
-
+     
         public DbSet<Company> Companies { get; set; } = null!;
         public DbSet<SuperAdmin> SuperAdmins { get; set; } = null!;
         public DbSet<Admin> Admins { get; set; } = null!;
@@ -19,6 +19,9 @@ namespace Infrastructure.Data
         public DbSet<Passenger> Passengers { get; set; } = null!;
         public DbSet<City> Cities { get; set; } = null!;
         public DbSet<Station> Stations { get; set; } = null!;
+        public DbSet<Bus> Buses { get; set; } = null!;  
+        public DbSet<Route> Routes { get; set; } = null!;  
+        public DbSet<CompanyFeedback> CompanyFeedbacks { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

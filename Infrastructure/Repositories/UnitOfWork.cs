@@ -1,21 +1,25 @@
 using Domain.Entities;
 using Domain.Repositories.Interfaces;
 using Infrastructure.Data;
+using Infrastructure.Repositories.Company;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Threading.Tasks;
+using Company = Domain.Entities.Company;
 
 namespace Infrastructure.Repositories
 {
     public class UnitOfWork : IUnitOfWork, IDisposable
     {
         private readonly ApplicationDbContext _context;
+        private bool _disposed;
+        private ICompanyRepository _companyRepository;
         private readonly UserManager<AppUser> _userManager;
         private readonly SignInManager<AppUser> _signInManager;
         private ICityRepository? _citiesRepository;
         private IStationRepository? _stationsRepository;
-        private IGenericRepository<Company>? _companiesRepository;
         private IUserRepository? _userRepository;
+
 
         public UnitOfWork(
             ApplicationDbContext context,
@@ -26,6 +30,8 @@ namespace Infrastructure.Repositories
             _userManager = userManager;
             _signInManager = signInManager;
         }
+        public ICompanyRepository CompanyRepository => 
+            _companyRepository ??= new CompanyRepository(_context);
 
         public ICityRepository Cities => 
             _citiesRepository ??= new CityRepository(_context);
@@ -49,9 +55,27 @@ namespace Infrastructure.Repositories
             return await _context.SaveChangesAsync();
         }
 
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    _context.Dispose();
+                }
+                _disposed = true;
+            }
+        }
+
         public void Dispose()
         {
-            _context.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        ~UnitOfWork()
+        {
+            Dispose(false);
         }
     }
 }

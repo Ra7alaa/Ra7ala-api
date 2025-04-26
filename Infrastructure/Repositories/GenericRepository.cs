@@ -59,5 +59,10 @@ namespace Infrastructure.Repositories
                 Update(entity);
             }
         }
+
+        public Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> expression)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
