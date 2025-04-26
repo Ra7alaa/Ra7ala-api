@@ -6,7 +6,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Infrastructure.Data.DataSeed
@@ -54,6 +56,8 @@ namespace Infrastructure.Data.DataSeed
                 await SeedAdminsAsync(adminPassword);
                 await SeedDriversAsync(driverPassword);
                 await SeedPassengersAsync(passengerPassword);
+                await SeedCitiesAsync();
+                await SeedStationsAsync();
 
                 _logger.LogInformation("Database seeding completed successfully!");
             }
@@ -550,5 +554,204 @@ namespace Infrastructure.Data.DataSeed
                 _logger.LogInformation("Passengers already exist, skipping passenger seed");
             }
         }
+
+        private async Task SeedCitiesAsync()
+        {
+            _logger.LogInformation("Seeding cities...");
+            
+            // Check if cities already exist in the database
+            if (!await _context.Cities.AnyAsync())
+            {
+                try
+                {
+                    // Define the path to the Cities.json file
+                    string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Infrastructure", "Data", "DataSeed", "Cities.json");
+                    
+                    // If the file doesn't exist at the expected path, try looking in the current directory
+                    if (!File.Exists(filePath))
+                    {
+                        // Try alternative paths
+                        string[] possiblePaths = new[]
+                        {
+                            "Cities.json",
+                            Path.Combine("Data", "DataSeed", "Cities.json"),
+                            Path.Combine("Infrastructure", "Data", "DataSeed", "Cities.json"),
+                            Path.Combine("..", "Infrastructure", "Data", "DataSeed", "Cities.json")
+                        };
+                        
+                        foreach (var path in possiblePaths)
+                        {
+                            if (File.Exists(path))
+                            {
+                                filePath = path;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    _logger.LogInformation("Reading cities data from file: {FilePath}", filePath);
+                    
+                    // Read the JSON file
+                    string jsonData = await File.ReadAllTextAsync(filePath);
+                    
+                    // Deserialize JSON to list of city objects
+                    var cityDtos = JsonSerializer.Deserialize<List<CitySeedDto>>(jsonData, 
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    
+                    if (cityDtos != null && cityDtos.Any())
+                    {
+                        _logger.LogInformation("Found {Count} cities in JSON file", cityDtos.Count);
+                        
+                        // Map to domain entities and add to context
+                        var cities = cityDtos.Select(dto => new Domain.Entities.City
+                        {
+                            Name = dto.Name,
+                            Governorate = dto.Governorate,
+                            IsDeleted = false
+                        }).ToList();
+                        
+                        await _context.Cities.AddRangeAsync(cities);
+                        await _context.SaveChangesAsync();
+                        
+                        _logger.LogInformation("Successfully added {Count} cities to the database", cities.Count);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("No cities found in the JSON file or file could not be properly deserialized");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error seeding cities from JSON file");
+                    throw;
+                }
+            }
+            else
+            {
+                _logger.LogInformation("Cities already exist in database. Skipping city seeding.");
+            }
+        }
+
+        private async Task SeedStationsAsync()
+        {
+            _logger.LogInformation("Seeding stations...");
+            
+            // Check if stations already exist in the database
+            if (!await _context.Stations.AnyAsync())
+            {
+                try
+                {
+                    // Define the path to the Stations.json file
+                    string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Infrastructure", "Data", "DataSeed", "Stations.json");
+                    
+                    // If the file doesn't exist at the expected path, try looking in alternative locations
+                    if (!File.Exists(filePath))
+                    {
+                        // Try alternative paths
+                        string[] possiblePaths = new[]
+                        {
+                            "Stations.json",
+                            Path.Combine("Data", "DataSeed", "Stations.json"),
+                            Path.Combine("Infrastructure", "Data", "DataSeed", "Stations.json"),
+                            Path.Combine("..", "Infrastructure", "Data", "DataSeed", "Stations.json")
+                        };
+                        
+                        foreach (var path in possiblePaths)
+                        {
+                            if (File.Exists(path))
+                            {
+                                filePath = path;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    _logger.LogInformation("Reading stations data from file: {FilePath}", filePath);
+                    
+                    // Read the JSON file
+                    string jsonData = await File.ReadAllTextAsync(filePath);
+                    
+                    // Deserialize JSON to list of station objects
+                    var stationDtos = JsonSerializer.Deserialize<List<StationSeedDto>>(jsonData, 
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    
+                    if (stationDtos != null && stationDtos.Any())
+                    {
+                        _logger.LogInformation("Found {Count} stations in JSON file", stationDtos.Count);
+                        
+                        // Get list of cities to validate city IDs
+                        var cities = await _context.Cities.Select(c => c.Id).ToListAsync();
+                        var companies = await _context.Companies.Select(c => c.Id).ToListAsync();
+                        
+                        // Map to domain entities and add to context
+                        var stations = new List<Domain.Entities.Station>();
+                        
+                        foreach (var dto in stationDtos)
+                        {
+                            // Only add stations with valid CityId
+                            if (cities.Contains(dto.CityId))
+                            {
+                                var station = new Domain.Entities.Station
+                                {
+                                    Name = dto.Name,
+                                    Latitude = dto.Latitude,
+                                    Longitude = dto.Longitude,
+                                    CityId = dto.CityId,
+                                    IsDeleted = false
+                                };
+                                
+                                // Associate with company if provided and valid
+                                if (dto.CompanyId.HasValue && companies.Contains(dto.CompanyId.Value))
+                                {
+                                    station.CompanyId = dto.CompanyId;
+                                }
+                                
+                                stations.Add(station);
+                            }
+                            else
+                            {
+                                _logger.LogWarning("Skipping station {StationName} due to invalid CityId: {CityId}", 
+                                    dto.Name, dto.CityId);
+                            }
+                        }
+                        
+                        await _context.Stations.AddRangeAsync(stations);
+                        await _context.SaveChangesAsync();
+                        
+                        _logger.LogInformation("Successfully added {Count} stations to the database", stations.Count);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("No stations found in the JSON file or file could not be properly deserialized");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error seeding stations from JSON file");
+                    throw;
+                }
+            }
+            else
+            {
+                _logger.LogInformation("Stations already exist in database. Skipping station seeding.");
+            }
+        }
+
+        private class CitySeedDto
+        {
+            public int CityId { get; set; }
+            public string Name { get; set; } = string.Empty;
+            public string Governorate { get; set; } = string.Empty;
+        }
+        
+        private class StationSeedDto
+        {
+            public int StationId { get; set; }
+            public string Name { get; set; } = string.Empty;
+            public decimal Latitude { get; set; }
+            public decimal Longitude { get; set; }
+            public int CityId { get; set; }
+            public int? CompanyId { get; set; }
+        }        
     }
 }

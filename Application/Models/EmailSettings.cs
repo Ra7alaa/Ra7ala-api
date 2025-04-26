@@ -7,5 +7,6 @@ namespace Application.Models
         public string Password { get; set; } = string.Empty;
         public string Host { get; set; } = string.Empty;
         public int Port { get; set; }
+        public string FrontendBaseUrl { get; set; } = string.Empty;
     }
 }

@@ -10,7 +10,6 @@ namespace Domain.Repositories.Interfaces
         // Read
         Task<IEnumerable<T>> GetAllAsync();
         Task<T> GetByIdAsync(int id);
-        Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> expression);
         
         // Create
         Task AddAsync(T entity);

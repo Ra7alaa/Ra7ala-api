@@ -2,6 +2,7 @@ using Domain.Entities;
 using Domain.Repositories.Interfaces;
 using Infrastructure.Data;
 using Infrastructure.Repositories.Company;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Threading.Tasks;
 using Company = Domain.Entities.Company;
@@ -13,16 +14,42 @@ namespace Infrastructure.Repositories
         private readonly ApplicationDbContext _context;
         private bool _disposed;
         private ICompanyRepository _companyRepository;
+        private readonly UserManager<AppUser> _userManager;
+        private readonly SignInManager<AppUser> _signInManager;
+        private ICityRepository? _citiesRepository;
+        private IStationRepository? _stationsRepository;
+        private IUserRepository? _userRepository;
 
-        public UnitOfWork(ApplicationDbContext context)
+
+        public UnitOfWork(
+            ApplicationDbContext context,
+            UserManager<AppUser> userManager,
+            SignInManager<AppUser> signInManager)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _context = context;
+            _userManager = userManager;
+            _signInManager = signInManager;
         }
-
-        // Custom Repositories
         public ICompanyRepository CompanyRepository => 
             _companyRepository ??= new CompanyRepository(_context);
+
+        public ICityRepository Cities => 
+            _citiesRepository ??= new CityRepository(_context);
+
+        public IStationRepository Stations => 
+            _stationsRepository ??= new StationRepository(_context);
+
+        public IGenericRepository<Company> Companies => 
+            _companiesRepository ??= new GenericRepository<Company>(_context);
             
+        public IUserRepository Users => 
+            _userRepository ??= new UserRepository(_context, _userManager, _signInManager);
+
+        public void Add<T>(T entity) where T : class
+        {
+            _context.Set<T>().Add(entity);
+        }
+
         public async Task<int> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync();

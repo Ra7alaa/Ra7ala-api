@@ -5,5 +5,8 @@ namespace Application.Services.Interfaces
         Task SendAdminCredentialsEmailAsync(string CompanyName,string email, string userName, string password);
         Task SendEmailAsync(string to, string subject, string body);
         Task SendPasswordResetEmailAsync(string toEmail, string username, string resetToken);
+        Task SendPasswordChangedNotificationAsync(string toEmail, string username);
+        Task SendUserCredientialsEmailAsync(string toEmail, string username, string password);
+        Task SendCompanyUserCredientialsEmailAsync(string toEmail, string username, string password, string fullName, string roleName, string companyName);
     }
 }

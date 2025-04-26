@@ -30,9 +30,21 @@ namespace Presentation
 
             // Configure JWT services
             builder.Services.AddJwtServices(builder.Configuration);
+          
+            // Configure City services
+            builder.Services.AddCityServices();
 
+            // Configure File services (must be registered before Auth service)
+            builder.Services.AddFileService();
+            
             // Configure Auth services
-            //builder.Services.AddAuthServices();
+            builder.Services.AddAuthService();
+            
+            // Configure Repository services
+            builder.Services.AddRepositoryServices();
+            
+            // Configure Station services
+            builder.Services.AddStationServices();
 
             // Configure Data Seed services
             builder.Services.AddDataSeedServices();
