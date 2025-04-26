@@ -36,7 +36,7 @@ namespace Infrastructure.Repositories
         public ICompanyRepository CompanyRepository => 
             _companyRepository ??= new CompanyRepository(_context);
 
-        IGenericRepository<Domain.Entities.Company> IUnitOfWork.Companies => throw new NotImplementedException();
+    
 
         public async Task<int> SaveChangesAsync()
         {
