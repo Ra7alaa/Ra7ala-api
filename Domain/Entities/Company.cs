@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
+using Domain.Enums;
 
 namespace Domain.Entities
 {
@@ -34,11 +35,12 @@ namespace Domain.Entities
         public string SuperAdminName { get; set; } = string.Empty;
         public string SuperAdminEmail { get; set; } = string.Empty;
         public string SuperAdminPhone { get; set; } = string.Empty;
-        
+
         // Registration status
-        public bool IsApproved { get; set; } = false;
-        public bool IsRejected { get; set; } = false;
-        public bool IsDeleted { get; set; } = false;
+        public string Status { get; set; } = CompanyStatus.Pending.ToString();
+
+        //public CompanyStatus Status { get; set; } = CompanyStatus.Pending;
+        public string? RejectionReason { get; set; }
 
         // Timestamps
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
@@ -56,6 +58,6 @@ namespace Domain.Entities
         // public virtual ICollection<Trip> Trips { get; set; } = new List<Trip>();
         public virtual ICollection<Route> Routes { get; set; } = new List<Route>();
         public virtual ICollection<CompanyFeedback> Feedbacks { get; set; } = new List<CompanyFeedback>();
-        public string? RejectionReason { get; set; }
+
     }
 }

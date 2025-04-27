@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Domain.Entities;
+using Domain.Enums;
 using Domain.Repositories.Interfaces;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -13,25 +14,23 @@ namespace Infrastructure.Repositories.Company
 {
     public class CompanyRepository : GenericRepository<Domain.Entities.Company>, ICompanyRepository
     {
-        private readonly ApplicationDbContext _context;
-
         public CompanyRepository(ApplicationDbContext context) : base(context)
         {
-            _context = context;
+
         }
 
         // Retrieve a company by its ID
         public async Task<Domain.Entities.Company?> GetCompanyByIdAsync(int id)
         {
             return await _context.Set<Domain.Entities.Company>()
-                .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
+                .FirstOrDefaultAsync(c => c.Id == id && c.Status != CompanyStatus.Deleted.ToString());
         }
         // Check if a user has access to a specific company based on their ID and the company's ID
         public async Task<bool> UserHasAccessToCompany(string userId, int companyId)
         {
             return await _context.Companies
                 .AnyAsync(c => c.Id == companyId && 
-                            !c.IsDeleted && 
+                             c.Status == CompanyStatus.Approved.ToString() && 
                             (c.SuperAdmin.Id == userId || 
                             c.Admins.Any(a => a.Id == userId)));
         }
@@ -50,7 +49,8 @@ namespace Infrastructure.Repositories.Company
                 .Include(c => c.Routes)
                 .Include(c => c.Feedbacks)
                     .ThenInclude(sa => sa!.Passenger)
-                .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
+                .FirstOrDefaultAsync(c => c.Id == id && c.Status == CompanyStatus.Approved.ToString())
+                ?? throw new Exception("Company not found or not approved.");
         }
 
        
@@ -80,7 +80,7 @@ namespace Infrastructure.Repositories.Company
         public async Task<List<Domain.Entities.Company>> GetPendingCompaniesAsync()
         {
            return await _context.Set<Domain.Entities.Company>()
-            .Where(c => !c.IsApproved && !c.IsRejected && !c.IsDeleted)
+            .Where(c => c.Status == CompanyStatus.Pending.ToString())
             .Include(c => c.SuperAdmin)
             .OrderByDescending(c => c.CreatedDate)
             .ToListAsync();
@@ -94,10 +94,8 @@ namespace Infrastructure.Repositories.Company
 
             if (company == null)
                 return false;
-
-            company.IsApproved = isApproved;
-            company.IsRejected = !isApproved;
-
+            company.Status = isApproved ? CompanyStatus.Approved.ToString() : CompanyStatus.Rejected.ToString();
+            
             if (isApproved)
                 company.ApprovedDate = DateTime.UtcNow;
             else if (rejectionReason != null)
@@ -113,14 +111,14 @@ namespace Infrastructure.Repositories.Company
             return await _context.Set<Domain.Entities.Company>()
                 .Include(c => c.Feedbacks)
                     .ThenInclude(f => f.Passenger)
-                .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
+                .FirstOrDefaultAsync(c => c.Id == id &&  c.Status == CompanyStatus.Approved.ToString());
         }
        
         // Update the company's rating based on the company ID and the new rating
         public async Task<bool> UpdateCompanyRatingAsync(int companyId)
         {
             var company = await _context.Set<Domain.Entities.Company>()
-                .FirstOrDefaultAsync(c => c.Id == companyId);
+                .FirstOrDefaultAsync(c => c.Id == companyId && c.Status == CompanyStatus.Approved.ToString());
 
             if (company == null)
                 return false;
@@ -148,19 +146,15 @@ namespace Infrastructure.Repositories.Company
        public async Task<int> GetAverageRatingAsync(int companyId)
         {
             var company = await _context.Set<Domain.Entities.Company>()
-            .Where(c => c.Id == companyId && !c.IsDeleted)
-            .Select(c => c.AverageRating)
-            .FirstOrDefaultAsync();
-            
-            if (!company.HasValue)
-                return 0;
-                
-            
-            var boundedRating = Math.Max(0, company.Value);
-            int starRating = (int)Math.Round(boundedRating);
-            starRating = Math.Min(5, starRating);
-            
-            return starRating;
+                .FirstOrDefaultAsync(c => c.Id == companyId && c.Status == CompanyStatus.Approved.ToString());
+        
+            if (company == null || !company.AverageRating.HasValue)
+                throw new KeyNotFoundException($"Company with ID {companyId} not found or has no ratings");
+            return (int)Math.Round(company.AverageRating.Value, 1);
+            // var boundedRating = Math.Max(0, company.Value);
+            // int starRating = (int)Math.Round(boundedRating);
+            // starRating = Math.Min(5, starRating);
+            //return starRating;
         }
 
         // Check if a company exists that matches the given condition

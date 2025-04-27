@@ -1,5 +1,6 @@
 using Application.DTOs.Auth;
 using Application.DTOs.Company;
+using Application.Map;
 using Application.Services.Interfaces;
 using Domain.Entities;
 using Domain.Enums;
@@ -41,13 +42,13 @@ namespace Application.Services
             {
                 // Check if company exists by name or email with proper case-insensitive comparison
                 var nameExists = await _unitOfWork.CompanyRepository.ExistsAsync(
-                    c => c.Name.ToLower() == createDto.Name.ToLower() && !c.IsDeleted);
+                    c => c.Name.ToLower() == createDto.Name.ToLower() && c.Status !=CompanyStatus.Deleted.ToString());
                     
                 if (nameExists)
                     throw new InvalidOperationException($"A company with the name '{createDto.Name}' already exists");
 
                 var emailExists = await _unitOfWork.CompanyRepository.ExistsAsync(
-                    c => c.Email.ToLower() == createDto.Email.ToLower() && !c.IsDeleted);
+                    c => c.Email.ToLower() == createDto.Email.ToLower() && c.Status != CompanyStatus.Deleted.ToString());
                     
                 if (emailExists)
                     throw new InvalidOperationException($"A company with the email '{createDto.Email}' already exists");
@@ -58,7 +59,7 @@ namespace Application.Services
                     throw new InvalidOperationException($"This email '{createDto.SuperAdminEmail}' already exists in the system");
 
                 var superAdminEmailExists = await _unitOfWork.CompanyRepository.ExistsAsync(
-                    u => u.SuperAdminEmail.ToLower() == createDto.SuperAdminEmail.ToLower() && !u.IsDeleted);
+                    u => u.SuperAdminEmail.ToLower() == createDto.SuperAdminEmail.ToLower() && u.Status != CompanyStatus.Deleted.ToString()); 
 
                 if (superAdminEmailExists)
                     throw new InvalidOperationException($"A user with the email '{createDto.SuperAdminEmail}' already exists");   
@@ -70,8 +71,7 @@ namespace Application.Services
                     Phone = createDto.Phone,
                     Address = createDto.Address.Trim(),
                     Description = createDto.Description.Trim(),
-                    IsApproved = false,
-                    IsRejected = false,
+                    Status = CompanyStatus.Pending.ToString(),
                     RejectionReason = string.Empty,
                     SuperAdminName = createDto.SuperAdminName.Trim(),
                     SuperAdminEmail = createDto.SuperAdminEmail.Trim().ToLower(),
@@ -109,7 +109,7 @@ namespace Application.Services
             try
             {
                 // Create a default filter for non-deleted companies
-                Expression<Func<Company, bool>> predicate = c => !c.IsDeleted;
+                Expression<Func<Company, bool>> predicate = c => c.Status != CompanyStatus.Deleted.ToString();
                 
                 var (companies, totalCount) = await _unitOfWork.CompanyRepository
                     .GetPagedCompaniesAsync(pageNumber, pageSize, predicate);
@@ -133,47 +133,43 @@ namespace Application.Services
         // Fix for the GetPendingCompaniesAsync method
         public async Task<CompanyListResponseDto> GetPendingCompaniesAsync(int pageNumber = 1, int pageSize = 10)
         {
-            var filter = new CompanyFilterDto { IsApproved = false, IsRejected = false, IsDeleted = false };
+            var filter = new CompanyFilterDto {Status = CompanyStatus.Pending.ToString()};
             return await GetCompaniesAsync(pageNumber, pageSize, filter);
         }
 
         // Update the GetApprovedCompaniesAsync method to support pagination
         public async Task<CompanyListResponseDto> GetApprovedCompaniesAsync(int pageNumber = 1, int pageSize = 10)
         {
-            var filter = new CompanyFilterDto { IsApproved = true };
+            var filter = new CompanyFilterDto { Status = CompanyStatus.Approved.ToString() };
             return await GetCompaniesAsync(pageNumber, pageSize, filter);
         }
 
         // Update the GetRejectedCompaniesAsync method to support pagination
         public async Task<CompanyListResponseDto> GetRejectedCompaniesAsync(int pageNumber = 1, int pageSize = 10)
         {
-            var filter = new CompanyFilterDto { IsRejected = true };
+            var filter = new CompanyFilterDto { Status = CompanyStatus.Rejected.ToString() };
             return await GetCompaniesAsync(pageNumber, pageSize, filter);
         }
 
         // Retrieves a paginated list of companies with Filter.
         public async Task<CompanyListResponseDto> GetCompaniesAsync(int pageNumber, int pageSize, CompanyFilterDto? filter = null)
         {
-            // Start with not deleted as default predicate
-            Expression<Func<Company, bool>> predicate = c => !c.IsDeleted;
-
-            if (filter != null)
+            try 
             {
-                if (filter.IsApproved.HasValue)
-                    predicate = CombinePredicates(predicate, c => c.IsApproved == filter.IsApproved.Value);
+                // Start with default predicate
+                Expression<Func<Company, bool>> predicate = c => c.Status != CompanyStatus.Deleted.ToString();
 
-                if (filter.IsRejected.HasValue)
-                    predicate = CombinePredicates(predicate, c => c.IsRejected == filter.IsRejected.Value);
+                // Apply status filter if provided
+                if (!string.IsNullOrEmpty(filter?.Status))
+                {
+                    if (Enum.TryParse<CompanyStatus>(filter.Status, ignoreCase: true, out var status))
+                    {
+                        predicate = CombinePredicates(predicate, c => c.Status == status.ToString());
+                    }
+                }
 
-                // Pending companies are those that are neither approved nor rejected
-                if (!filter.IsApproved.HasValue && !filter.IsRejected.HasValue)
-                    predicate = CombinePredicates(predicate, c => !c.IsApproved && !c.IsRejected);
-
-                // Override IsDeleted filter only if specifically requested
-                if (filter.IsDeleted.HasValue)
-                    predicate = CombinePredicates(predicate, c => c.IsDeleted == filter.IsDeleted.Value);
-
-                if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
+                // Apply search filter if provided
+                if (!string.IsNullOrWhiteSpace(filter?.SearchTerm))
                 {
                     var searchTerm = filter.SearchTerm.Trim().ToLower();
                     predicate = CombinePredicates(predicate, c =>
@@ -182,29 +178,44 @@ namespace Application.Services
                         c.Phone.Contains(searchTerm) ||
                         c.Address.ToLower().Contains(searchTerm));
                 }
+
+                var (companies, totalCount) = await _unitOfWork.CompanyRepository
+                    .GetPagedCompaniesAsync(pageNumber, pageSize, predicate);
+
+                return new CompanyListResponseDto
+                {
+                    Companies = companies.Select(MapToCompanyDto).ToList(),
+                    CurrentPage = pageNumber,
+                    PageSize = pageSize,
+                    TotalCount = totalCount,
+                    TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+                };
             }
-
-            var (companies, totalCount) = await _unitOfWork.CompanyRepository
-                .GetPagedCompaniesAsync(pageNumber, pageSize, predicate);
-
-            return new CompanyListResponseDto
+            catch (Exception ex)
             {
-                Companies = companies.Select(MapToCompanyDto).ToList(),
-                CurrentPage = pageNumber,
-                PageSize = pageSize,
-                TotalCount = totalCount,
-                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
-            };
+                _logger.LogError(ex, "Error getting companies with filter");
+                throw;
+            }
         }
 
-        // Retrieves a specific company by its ID.
-        public async Task<CompanyDto> GetCompanyByIdAsync(int id)
+        // Retrieves a specific company by its ID for owner.
+        public async Task<CompanyOwnerDetailsDto> GetCompanyOwnerProfileAsync(int id)
         {
-            var company = await _unitOfWork.CompanyRepository.GetCompanyByIdAsync(id);
+            var company = await _unitOfWork.CompanyRepository.GetCompanyWithDetailsAsync(id);
             if (company == null)
                 throw new KeyNotFoundException($"Company with ID {id} not found");
 
-            return MapToCompanyDto(company);
+            return company.ToCompanyOwnerDetailsDto();
+        }
+
+        // Retrieves a specific company by its ID for super admin.
+        public async Task<CompanySuperAdminDetailsDto> GetCompanySuperAminProfileAsync(int id)
+        {
+            var company = await _unitOfWork.CompanyRepository.GetCompanyWithDetailsAsync(id);
+            if (company == null)
+                throw new KeyNotFoundException($"Company with ID {id} not found");
+
+            return company.ToCompanySuperAdminDetailsDto();
         }
 
         public async Task<CompanyUserProfileDto> GetCompanyUserProfileAsync(int companyId)
@@ -224,7 +235,6 @@ namespace Application.Services
                 Description = company.Description,
                 LogoUrl = company.LogoUrl,
                 AverageRating = averageRating
-                // TotalRatings = company.TotalRatings ?? 0
             };
         }
 
@@ -235,34 +245,8 @@ namespace Application.Services
             if (company == null)
                 throw new KeyNotFoundException($"Company with ID {companyId} not found");
 
-            // Verify if user has access to this company
-            // var userHasAccess = await _unitOfWork.CompanyRepository.UserHasAccessToCompany(userId, companyId);
-            // if (!userHasAccess)
-            //     throw new UnauthorizedAccessException("You don't have access to this company's admin profile");
-
-            return new CompanyAdminProfileDto
-            {
-                Id = company.Id,
-                Name = company.Name,
-                Email = company.Email,
-                Phone = company.Phone,
-                Address = company.Address,
-                Description = company.Description,
-                LogoUrl = company.LogoUrl,
-                AverageRating = company.AverageRating ?? 0,
-                TotalRatings = company.TotalRatings ?? 0,
-                SuperAdminName = company.SuperAdminName,
-                SuperAdminEmail = company.SuperAdminEmail,
-                SuperAdminPhone = company.SuperAdminPhone,
-                CreatedDate = company.CreatedDate,
-                ApprovedDate = company.ApprovedDate,
-                Admins = company.Admins.Select(a => new AdminInfoDto
-                {
-                    Name = a.AppUser.FullName,
-                    Email = a.AppUser.Email ?? string.Empty,
-                    Department = a.Department
-                }).ToList(),
-            };
+            return company.ToCompanyAdminDetailsDto();
+          
         }
        
         // Updates an existing company with the provided data.
@@ -296,7 +280,7 @@ namespace Application.Services
             if (company == null)
                 return false;
 
-            company.IsDeleted = true;
+            company.Status = CompanyStatus.Deleted.ToString();
             await _unitOfWork.SaveChangesAsync();
             return true;
         }
@@ -363,7 +347,19 @@ namespace Application.Services
         // Calculates the average rating for a given company.
         public async Task<int> GetCompanyAverageRatingAsync(int companyId)
         {
-            return await _unitOfWork.CompanyRepository.GetAverageRatingAsync(companyId);
+            try
+            {
+                return await _unitOfWork.CompanyRepository.GetAverageRatingAsync(companyId);
+            }
+            catch (KeyNotFoundException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting average rating for company {CompanyId}", companyId);
+                throw;
+            }
         }
 
         // Retrieves detailed ratings for a given company.
@@ -415,9 +411,7 @@ namespace Application.Services
                 Address = company.Address,
                 Description = company.Description,
                 LogoUrl = company.LogoUrl,
-                IsApproved = company.IsApproved,
-                IsRejected = company.IsRejected,
-                IsDeleted = company.IsDeleted,
+                Status= company.Status.ToString(),
                 AverageRating = (double)(company.AverageRating ?? 0),
                 TotalRatings = (int)(company.TotalRatings ?? 0),
                 CreatedDate = company.CreatedDate,
@@ -469,6 +463,7 @@ namespace Application.Services
                 throw;
             }
         }
-        
+
+       
     }
 }

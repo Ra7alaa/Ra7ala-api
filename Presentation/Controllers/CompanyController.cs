@@ -2,6 +2,7 @@ using Application.DTOs.Company;
 using Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Application.DTOs;
 using System.Security.Claims;
 using Swashbuckle.AspNetCore.Annotations; 
 
@@ -169,41 +170,31 @@ namespace Presentation.Controllers
         [HttpGet("filter")]
         [Authorize(Roles = "Owner")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<CompanyListResponseDto>> GetFilteredCompanies(
-            [FromQuery] CompanyFilterDto filter,
-            [FromQuery] bool? isPending = null,
+        public async Task<ActionResult<CompanyListResponseDto>> GetCompanies(
+            [FromQuery] CompanyFilterDto filterDto,
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10)
         {
             try
             {
-                if (isPending.HasValue && isPending.Value)
-                {
-                    // Override filter settings for pending companies
-                    filter ??= new CompanyFilterDto();
-                    filter.IsApproved = false;
-                    filter.IsRejected = false;
-                    filter.IsDeleted = false;
-                }
-
-                var result = await _companyService.GetCompaniesAsync(pageNumber, pageSize, filter);
+                var result = await _companyService.GetCompaniesAsync(pageNumber, pageSize, filterDto);
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting filtered companies");
+                _logger.LogError(ex, "Error getting companies");
                 return StatusCode(500, "An error occurred while retrieving companies");
             }
         }
-
-        // Get company by ID
+        // Get company by ID for Owner
         // [SwaggerOperation(
-        //     Summary = "Get a company by ID",
+        //     Summary = "Get a company by ID for Owner",
         //     Description = "Retrieves details of a specific company using its ID",
         //     OperationId = "GetCompanyById",
         //     Tags = new[] { "Company Management" }
         // )]
-        [HttpGet("{id}")]
+        [HttpGet("{id}/Company-Owner-profile")]
+        [Authorize(Roles = "Owner")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
     
@@ -211,7 +202,7 @@ namespace Presentation.Controllers
         {
             try
             {
-                var company = await _companyService.GetCompanyByIdAsync(id);
+                var company = await _companyService.GetCompanyOwnerProfileAsync(id);
                 return Ok(company);
             }
             catch (KeyNotFoundException ex)
@@ -221,7 +212,37 @@ namespace Presentation.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting company {Id}", id);
-                return StatusCode(500,  ex.InnerException != null ? ex.InnerException.Message : ex.Message);
+                return StatusCode(500,"An error occurred while retrieving the company profile");
+            }
+        }
+
+        // Get company by ID for Owner
+        // [SwaggerOperation(
+        //     Summary = "Get a company by ID for Owner",
+        //     Description = "Retrieves details of a specific company using its ID",
+        //     OperationId = "GetCompanyById",
+        //     Tags = new[] { "Company Management" }
+        // )]
+        [HttpGet("{id}/Company-SuperAdmin-profile")]
+        [Authorize(Roles = "SuperAdmin")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+    
+        public async Task<ActionResult<CompanyDto>> GetCompanyByIdForOwnerAsync(int id)
+        {
+            try
+            {
+                var company = await _companyService.GetCompanySuperAminProfileAsync(id);
+                return Ok(company);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting company {Id}", id);
+                return StatusCode(500,  "An error occurred while retrieving the company profile");
             }
         }
 
@@ -260,8 +281,8 @@ namespace Presentation.Controllers
         //     OperationId = "GetCompanyAdminProfile",
         //     Tags = new[] { "Company Management" }
         // )]
-        [HttpGet("{id}/SuperAdmin-profile")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
+        [HttpGet("{id}/Company-Admin-profile")]
+        [Authorize(Roles = "Admin")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -430,15 +451,19 @@ namespace Presentation.Controllers
         //     Tags = new[] { "Company Rating" }
         // )]
 
-        [HttpGet("{id}/average-rating ")]
+        [HttpGet("{id}/average-rating")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<double>> GetCompanyRating(int id)
+        public async Task<ActionResult<int>> GetCompanyRating(int id)
         {
             try
             {
                 var rating = await _companyService.GetCompanyAverageRatingAsync(id);
                 return Ok(rating);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return StatusCode(404,ex.InnerException.Message);
             }
             catch (Exception ex)
             {

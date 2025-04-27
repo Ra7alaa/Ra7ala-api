@@ -31,7 +31,7 @@ namespace Application.DTOs.Company
         [StringLength(500, ErrorMessage = "Description cannot exceed 500 characters")]
         public string Description { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Logo URL is required")]
+        //[Required(ErrorMessage = "Logo URL is required")]
         public IFormFile? Logo { get; set; }
     }
 }
