@@ -463,7 +463,7 @@ namespace Presentation.Controllers
             }
             catch (KeyNotFoundException ex)
             {
-                return StatusCode(404,ex.InnerException.Message);
+                return NotFound(ex.Message); 
             }
             catch (Exception ex)
             {
