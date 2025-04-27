@@ -8,24 +8,22 @@ namespace Domain.Entities
 {
     public class Route
     {
-        [Key]
         public int Id { get; set; }
-        [Required]
-        [StringLength(100)]
         public string Name { get; set; }
-        [Required]
-        public string DepartureCity { get; set; }
-        [Required]
-        public string ArrivalCity { get; set; }
-        public int Distance { get; set; } // in km
-        public int EstimatedDuration { get; set; } // in minutes
+        public int StartCityId { get; set; }
+        public int EndCityId { get; set; }
+        public int Distance { get; set; } 
+        public int EstimatedDuration { get; set; } 
         public int CompanyId { get; set; }
         public bool IsActive { get; set; } = true;
+        public bool IsDeleted { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation properties
         public virtual Company Company { get; set; }
-        // public virtual ICollection<RouteStation> Stations { get; set; }
-        // public virtual ICollection<Trip> Trips { get; set; }
+        public virtual City StartCity { get; set; }
+        public virtual City EndCity { get; set; }
+        public virtual ICollection<RouteStation> RouteStations { get; set; }
+        public virtual ICollection<Trip> Trips { get; set; }
     }
 }
