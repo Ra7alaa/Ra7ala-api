@@ -31,7 +31,7 @@ namespace Application.DTOs.Company
         [StringLength(500, ErrorMessage = "Description cannot exceed 500 characters")]
         public string Description { get; set; } = string.Empty;
         
-        [Required(ErrorMessage = "Country is required")]
+        //[Required(ErrorMessage = "Country is required")]
         public IFormFile? Logo { get; set; }
 
         // Super Admin details

@@ -1,3 +1,4 @@
+using Application.DTOs.Auth;
 using Application.DTOs.Company;
 using Application.Services.Interfaces;
 using Domain.Entities;
@@ -15,17 +16,21 @@ namespace Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<AppUser> _userManager;
         private readonly IEmailService _emailService;
+        private readonly IAuthService _authService;
+
         private readonly ILogger<CompanyService> _logger;
 
         public CompanyService(
             IUnitOfWork unitOfWork,
             UserManager<AppUser> userManager,
             IEmailService emailService,
+            IAuthService authService,
             ILogger<CompanyService> logger)
         {
             _unitOfWork = unitOfWork;
             _userManager = userManager;
             _emailService = emailService;
+            _authService = authService;
             _logger = logger;
         }
 
@@ -46,6 +51,17 @@ namespace Application.Services
                     
                 if (emailExists)
                     throw new InvalidOperationException($"A company with the email '{createDto.Email}' already exists");
+
+                // Check if super admin email exists in the system  
+                var userExists = await _userManager.FindByEmailAsync(createDto.SuperAdminEmail);
+                if (userExists != null)
+                    throw new InvalidOperationException($"This email '{createDto.SuperAdminEmail}' already exists in the system");
+
+                var superAdminEmailExists = await _unitOfWork.CompanyRepository.ExistsAsync(
+                    u => u.SuperAdminEmail.ToLower() == createDto.SuperAdminEmail.ToLower() && !u.IsDeleted);
+
+                if (superAdminEmailExists)
+                    throw new InvalidOperationException($"A user with the email '{createDto.SuperAdminEmail}' already exists");   
 
                 var company = new Company
                 {
@@ -184,7 +200,7 @@ namespace Application.Services
         // Retrieves a specific company by its ID.
         public async Task<CompanyDto> GetCompanyByIdAsync(int id)
         {
-            var company = await _unitOfWork.CompanyRepository.GetCompanyWithDetailsAsync(id);
+            var company = await _unitOfWork.CompanyRepository.GetCompanyByIdAsync(id);
             if (company == null)
                 throw new KeyNotFoundException($"Company with ID {id} not found");
 
@@ -288,9 +304,9 @@ namespace Application.Services
         // Reviews a company's registration based on the provided details.
         public async Task<CompanyDto> ReviewCompanyRegistrationAsync(ReviewCompanyDto reviewDto)
         {
-            var company = await _unitOfWork.CompanyRepository.GetCompanyWithDetailsAsync(reviewDto.CompanyId);
-            // if (company == null)
-            //     throw new KeyNotFoundException($"Company with ID {reviewDto.CompanyId} not found");
+            var company = await _unitOfWork.CompanyRepository.GetCompanyByIdAsync(reviewDto.CompanyId);
+            if (company == null)
+                throw new KeyNotFoundException($"Company with ID {reviewDto.CompanyId} not found");
 
             await _unitOfWork.CompanyRepository.UpdateCompanyStatusAsync(
                 reviewDto.CompanyId,
@@ -300,7 +316,20 @@ namespace Application.Services
 
             if (reviewDto.IsApproved)
             {
-                await CreateDefaultAdminAccountAsync(company);
+               var superAdminDto = new SuperAdminDto
+                {
+                    FullName = company.SuperAdminName,
+                    Email = company.SuperAdminEmail,
+                    PhoneNumber = company.SuperAdminPhone,
+                    CompanyId = company.Id
+                };
+
+                var registerResult = await _authService.RegisterSuperAdminAsync(superAdminDto);
+
+                if (!registerResult.IsSuccess)
+                {
+                    throw new Exception($"Failed to create Super Admin after company approval: {string.Join(", ", registerResult.Errors)}");
+                }
             }
 
             await _unitOfWork.SaveChangesAsync();
@@ -439,43 +468,6 @@ namespace Application.Services
                 _logger.LogError(ex, "Error uploading company logo");
                 throw;
             }
-        }
-
-        private async Task CreateDefaultAdminAccountAsync(Company company)
-        {
-            try
-            {
-                var password = GenerateSecurePassword();
-                var superAdmin = new AppUser
-                {
-                    UserName = $"Superadmin_{company.SuperAdminName.ToLower().Replace(" ", "_")}",
-                    Email = company.SuperAdminEmail,
-                    EmailConfirmed = true,
-                    PhoneNumber = company.SuperAdminPhone,
-                    UserType = UserType.Admin
-                };
-
-                var result = await _userManager.CreateAsync(superAdmin, password);
-                if (!result.Succeeded)
-                {
-                    throw new Exception($"Failed to create admin account: {string.Join(", ", result.Errors)}");
-                }
-
-                await _userManager.AddToRoleAsync(superAdmin, "SuperAdmin");
-
-                // Send email with credentials
-                await _emailService.SendAdminCredentialsEmailAsync(company.Name, superAdmin.Email, superAdmin.UserName, password);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating default admin account for company {CompanyId}", company.Id);
-                throw;
-            }
-        }
-
-        private string GenerateSecurePassword()
-        {
-            return Guid.NewGuid().ToString("N").Substring(0, 12) + "Aa1!";
         }
         
     }

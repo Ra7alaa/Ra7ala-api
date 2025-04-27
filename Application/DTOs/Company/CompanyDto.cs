@@ -34,7 +34,6 @@ namespace Application.DTOs.Company
         public string LogoUrl { get; set; } = string.Empty;
         public bool IsApproved { get; set; }
         public bool IsRejected { get; set; }
-
         public bool IsDeleted { get; set; }
 
         [Range(0, 5, ErrorMessage = "Rating must be between 0 and 5")]

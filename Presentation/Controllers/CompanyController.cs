@@ -167,6 +167,7 @@ namespace Presentation.Controllers
         //     Tags = new[] { "Company Management" }
         // )]
         [HttpGet("filter")]
+        [Authorize(Roles = "Owner")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<CompanyListResponseDto>> GetFilteredCompanies(
             [FromQuery] CompanyFilterDto filter,
@@ -205,7 +206,7 @@ namespace Presentation.Controllers
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-
+    
         public async Task<ActionResult<CompanyDto>> GetCompany(int id)
         {
             try
@@ -220,7 +221,7 @@ namespace Presentation.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting company {Id}", id);
-                return StatusCode(500, "An error occurred while retrieving the company");
+                return StatusCode(500,  ex.InnerException != null ? ex.InnerException.Message : ex.Message);
             }
         }
 
@@ -231,7 +232,7 @@ namespace Presentation.Controllers
         //     OperationId = "GetCompanyUserProfile",
         //     Tags = new[] { "Company Management" }
         // )]
-        [HttpGet("{id}/user-profile")]
+        [HttpGet("{id}/Company-User-profile")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<CompanyUserProfileDto>> GetCompanyUserProfile(int id)
@@ -259,7 +260,7 @@ namespace Presentation.Controllers
         //     OperationId = "GetCompanyAdminProfile",
         //     Tags = new[] { "Company Management" }
         // )]
-        [HttpGet("{id}/admin-profile")]
+        [HttpGet("{id}/SuperAdmin-profile")]
         [Authorize(Roles = "Admin,SuperAdmin")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -345,7 +346,7 @@ namespace Presentation.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error reviewing company {Id}", reviewDto.CompanyId);
-                return StatusCode(500, "An error occurred while reviewing the company");
+                return StatusCode(500, "An error occurred while reviewing the company registration");
             }
         }
 
@@ -373,7 +374,7 @@ namespace Presentation.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting company {Id}", id);
-                return StatusCode(500, ex.InnerException != null ? ex.InnerException.Message : "An error occurred while deleting the company");
+                return StatusCode(500,"An error occurred while deleting the company");
             }
         }
 
@@ -385,7 +386,7 @@ namespace Presentation.Controllers
         //     OperationId = "AddFeedback",
         //     Tags = new[] { "Company Rating" }
         // )]
-        [HttpPost("{companyId}/feedback")]
+        [HttpPost("{companyId}/Feedback")]
         [Authorize(Roles = "Passenger")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -429,7 +430,7 @@ namespace Presentation.Controllers
         //     Tags = new[] { "Company Rating" }
         // )]
 
-        [HttpGet("{id}/rating")]
+        [HttpGet("{id}/average-rating ")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<double>> GetCompanyRating(int id)
