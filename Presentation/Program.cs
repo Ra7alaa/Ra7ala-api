@@ -60,6 +60,9 @@ namespace Presentation
             // Use CORS middleware (should be before authentication)
             app.UseCorsMiddleware();
 
+            // Add static files middleware
+            app.UseStaticFiles();
+
             app.UseHttpsRedirection();
 
             // Add authentication middleware

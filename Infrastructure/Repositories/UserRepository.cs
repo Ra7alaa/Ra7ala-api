@@ -1,4 +1,5 @@
 using Domain.Entities;
+using Domain.Enums;
 using Domain.Repositories.Interfaces;
 using Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
@@ -70,6 +71,30 @@ namespace Infrastructure.Repositories
         public async Task<bool> CheckPasswordAsync(AppUser user, string password)
         {
             return await _userManager.CheckPasswordAsync(user, password);
+        }
+
+        public async Task<AppUser?> GetSystemOwnerAsync()
+        {
+            return await _context.Users
+                .FirstOrDefaultAsync(u => u.UserType == UserType.Owner);
+        }
+
+        public async Task<IEnumerable<Admin>> GetAdminsByCompanyIdAsync(int companyId)
+        {
+            return await _context.Set<Admin>()
+                .Include(a => a.AppUser)
+                .Include(a => a.Company)
+                .Where(a => a.CompanyId == companyId)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Driver>> GetDriversByCompanyIdAsync(int companyId)
+        {
+            return await _context.Set<Driver>()
+                .Include(d => d.AppUser)
+                .Include(d => d.Company)
+                .Where(d => d.CompanyId == companyId)
+                .ToListAsync();
         }
     }
 }

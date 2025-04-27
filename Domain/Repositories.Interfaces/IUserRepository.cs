@@ -13,5 +13,8 @@ namespace Domain.Repositories.Interfaces
         Task<Passenger?> GetPassengerByUserIdAsync(string userId);
         Task<AppUser?> GetUserByEmailAsync(string email);
         Task<bool> CheckPasswordAsync(AppUser user, string password);
+        Task<AppUser?> GetSystemOwnerAsync();
+        Task<IEnumerable<Admin>> GetAdminsByCompanyIdAsync(int companyId);
+        Task<IEnumerable<Driver>> GetDriversByCompanyIdAsync(int companyId);
     }
 }

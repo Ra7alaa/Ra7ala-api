@@ -24,5 +24,17 @@ namespace Application.Services.Interfaces
         Task<ServiceResult> UpdateAdminAsync(ClaimsPrincipal user, string? adminId, UpdateAdminDto updateAdminDto);
         Task<ServiceResult> UpdatePassengerAsync(ClaimsPrincipal user, UpdatePassengerDto updatePassengerDto);
         Task<ServiceResult> UpdateDriverAsync(ClaimsPrincipal user, string? driverId, UpdateDriverDto updateDriverDto);
+
+        // Profile methods
+        Task<ServiceResult<SuperAdminProfileDto>> GetSuperAdminByIdAsync(string id);
+        Task<ServiceResult<AdminProfileDto>> GetAdminByIdAsync(string id);
+        Task<ServiceResult<PassengerProfileDto>> GetPassengerByIdAsync(string id);
+        Task<ServiceResult<DriverProfileDto>> GetDriverByIdAsync(string id);
+        Task<ServiceResult<SystemOwnerProfileDto>> GetSystemOwnerAsync();
+        Task<ServiceResult<object>> GetMyProfileAsync(ClaimsPrincipal user);
+
+        // Get All methods
+        Task<ServiceResult<IEnumerable<AdminProfileDto>>> GetAllAdminsInMyCompanyAsync(ClaimsPrincipal user);
+        Task<ServiceResult<IEnumerable<DriverProfileDto>>> GetAllDriversInMyCompanyAsync(ClaimsPrincipal user);
     }
 }
