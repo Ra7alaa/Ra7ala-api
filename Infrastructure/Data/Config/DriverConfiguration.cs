@@ -10,25 +10,26 @@ namespace Infrastructure.Data.Config
         {
             // Configure one-to-one relationship with AppUser
             builder.HasOne(d => d.AppUser)
-                .WithOne(u => u.Driver)
-                .HasForeignKey<Driver>(d => d.Id)
-                .OnDelete(DeleteBehavior.Cascade);
+                   .WithOne(u => u.Driver)
+                   .HasForeignKey<Driver>(d => d.Id)
+                   .OnDelete(DeleteBehavior.Cascade);
 
             // Company relationship
             builder.HasOne(d => d.Company)
-                .WithMany(c => c.Drivers)
-                .HasForeignKey(d => d.CompanyId)
-                .OnDelete(DeleteBehavior.Restrict);
-                
+                   .WithMany(c => c.Drivers)
+                   .HasForeignKey(d => d.CompanyId)
+                   .OnDelete(DeleteBehavior.Restrict);
+
             // Configure license details
             builder.Property(d => d.LicenseNumber)
                    .IsRequired()
                    .HasMaxLength(20);
-                   
+
             // Configure relation with trips
-            builder.HasMany<Trip>()
+            builder.HasMany(d => d.Trips)
                    .WithOne(t => t.Driver)
-                   .HasForeignKey(t => t.DriverId);
+                   .HasForeignKey(t => t.DriverId)
+                   .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

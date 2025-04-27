@@ -5,7 +5,7 @@ namespace Domain.Entities
         public int Id { get; set; }
         public int RouteId { get; set; }
         public DateTime DepartureTime { get; set; }
-        public int DriverId { get; set; }
+        public string DriverId { get; set; }
 
         // Navigation properties
         public virtual Route Route { get; set; } = null!;

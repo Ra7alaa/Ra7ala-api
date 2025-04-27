@@ -15,5 +15,6 @@ namespace Domain.Entities
         // Navigation properties
         public AppUser AppUser { get; set; } = null!;
         public Company Company { get; set; } = null!;
+        public virtual ICollection<Trip> Trips { get; set; }
     }
 }
