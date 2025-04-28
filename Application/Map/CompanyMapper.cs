@@ -116,7 +116,7 @@ namespace Application.Map
                 Address = company.Address,
                 Description = company.Description,
                 LogoUrl = company.LogoUrl,
-                Status = Enum.Parse<CompanyStatus>(company.Status),
+                Status =company.Status.ToString(),
                 RejectionReason = company.RejectionReason,
                 CreatedDate = company.CreatedDate,
                 ApprovedDate = company.ApprovedDate,

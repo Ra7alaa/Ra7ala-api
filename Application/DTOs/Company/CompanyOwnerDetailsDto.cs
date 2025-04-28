@@ -16,7 +16,7 @@ namespace Application.DTOs.Company
         public string LogoUrl { get; set; } = string.Empty;
         
         // Company Status
-        public CompanyStatus Status { get; set; }
+        public string Status { get; set; } = CompanyStatus.Pending.ToString();
         public string? RejectionReason { get; set; }
         
         // Timestamps
