@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
+using Domain.Enums;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain.Entities
 {
     public class Bus
     {
         [Key]
+        //[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         [Required]
         [StringLength(50)]
@@ -17,7 +20,8 @@ namespace Domain.Entities
         public string Model { get; set; }
         public int YearOfManufacture { get; set; }
         public bool IsDeleted { get; set; } = false;
-        public string Status { get; set; }
+        //public BusStatus Status { get; set; }= BusStatus.Active;
+        public string Status { get; set; } = BusStatus.Active.ToString();
        // public Point CurrentLocation { get; set; } // Real-time location
         public bool IsActive { get; set; } = true;
         public int CompanyId { get; set; }
