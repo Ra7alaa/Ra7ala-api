@@ -129,11 +129,11 @@ namespace Application.Services
                 throw;
             }
         }
-
+      
         // Fix for the GetPendingCompaniesAsync method
         public async Task<CompanyListResponseDto> GetPendingCompaniesAsync(int pageNumber = 1, int pageSize = 10)
         {
-            var filter = new CompanyFilterDto {Status = CompanyStatus.Pending.ToString()};
+            var filter = new CompanyFilterDto { Status = CompanyStatus.Pending.ToString() };
             return await GetCompaniesAsync(pageNumber, pageSize, filter);
         }
 
@@ -386,6 +386,22 @@ namespace Application.Services
                     CreatedAt = f.CreatedAt
                 }).ToList()
             };
+        }
+        
+        // Retrieves a paginated list of companies.
+        public async Task<List<CompanyOwnerDetailsDto>> GetAllCompaniesWithDetailsAsync(int pageNumber = 1, int pageSize = 10)
+        {
+            try
+            {
+                var companies = await _unitOfWork.CompanyRepository.GetAllCompaniesAsync();
+
+                return companies.Select(c => c.ToCompanyOwnerDetailsDto()).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting all companies with details");
+                throw;
+            }
         }
 
         //Private Methods

@@ -162,5 +162,20 @@ namespace Infrastructure.Repositories.Company
         {
             return await _context.Set<Domain.Entities.Company>().AnyAsync(predicate);
         }
+
+        public async Task<List<Domain.Entities.Company>> GetAllCompaniesAsync()
+        {
+            return await _context.Set<Domain.Entities.Company>()
+                .Include(c => c.SuperAdmin)
+                    .ThenInclude(sa => sa!.AppUser)
+                .Include(c => c.Admins)
+                .Include(c => c.Drivers)
+                .Include(c => c.Buses)
+                .Include(c => c.Routes)
+                .Include(c => c.Feedbacks)
+                .Where(c => c.Status != CompanyStatus.Deleted.ToString())
+                .OrderByDescending(c => c.CreatedDate)
+                .ToListAsync();
+        }
      }
 }

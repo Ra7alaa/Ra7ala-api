@@ -56,5 +56,7 @@ namespace Application.Services.Interfaces
         // Retrieves detailed ratings for a given company.
         Task<CompanyRatingsDto> GetCompanyRatingsDetailsAsync(int companyId);
 
+        // 
+        Task<List<CompanyOwnerDetailsDto>> GetAllCompaniesWithDetailsAsync(int pageNumber = 1, int pageSize = 10);
     }
 }

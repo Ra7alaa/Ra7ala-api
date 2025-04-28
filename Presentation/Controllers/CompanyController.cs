@@ -82,7 +82,6 @@ namespace Presentation.Controllers
             }
         }
 
-
         // Get pending companies awaiting approval
         // [SwaggerOperation(
         //     Summary = "Get pending companies",
@@ -198,7 +197,7 @@ namespace Presentation.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
     
-        public async Task<ActionResult<CompanyDto>> GetCompany(int id)
+        public async Task<ActionResult<CompanyOwnerDetailsDto>> GetCompany(int id)
         {
             try
             {
@@ -216,7 +215,7 @@ namespace Presentation.Controllers
             }
         }
 
-        // Get company by ID for Owner
+        // Get company by ID for SuperAdmin
         // [SwaggerOperation(
         //     Summary = "Get a company by ID for Owner",
         //     Description = "Retrieves details of a specific company using its ID",
@@ -224,11 +223,11 @@ namespace Presentation.Controllers
         //     Tags = new[] { "Company Management" }
         // )]
         [HttpGet("{id}/Company-SuperAdmin-profile")]
-        [Authorize(Roles = "SuperAdmin")]
+        [Authorize(Roles = "SuperAdmin,Owner")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
     
-        public async Task<ActionResult<CompanyDto>> GetCompanyByIdForOwnerAsync(int id)
+        public async Task<ActionResult<CompanySuperAdminDetailsDto>> GetCompanyByIdForOwnerAsync(int id)
         {
             try
             {
@@ -506,6 +505,25 @@ namespace Presentation.Controllers
             }
         }
 
+        [HttpGet("all-companies-details")]
+        [Authorize(Roles = "Owner")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<List<CompanyOwnerDetailsDto>>> GetAllCompaniesWithDetails(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
+        {
+            try
+            {
+                var companies = await _companyService.GetAllCompaniesWithDetailsAsync(pageNumber, pageSize);
+                return Ok(companies);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving companies with details");
+                return StatusCode(500, "An error occurred while retrieving companies");
+            }
+        }
     }
 
-    }
+}
