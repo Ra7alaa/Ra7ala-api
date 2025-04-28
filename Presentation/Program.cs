@@ -46,6 +46,9 @@ namespace Presentation
             // Configure Station services
             builder.Services.AddStationServices();
 
+            // Configure Route services
+            builder.Services.AddRouteServices();
+
             // Configure Data Seed services
             builder.Services.AddDataSeedServices();
 
