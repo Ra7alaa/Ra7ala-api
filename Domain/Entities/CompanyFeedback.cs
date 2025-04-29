@@ -9,9 +9,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Domain.Entities
 {
-    public class CompanyFeedback
+    public class CompanyFeedback : BaseEntity<int>
     {
-        public int Id { get; set; }
         public string PassengerId { get; set; } = string.Empty; // Changed to string for AppUser Id
         public int CompanyId { get; set; }
         public int Rating { get; set; }

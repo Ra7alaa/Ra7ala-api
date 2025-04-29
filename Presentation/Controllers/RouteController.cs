@@ -174,38 +174,38 @@ namespace Presentation.Controllers
         /// <param name="routeId">The route ID.</param>
         /// <param name="updateDto">The route update data.</param>
         /// <returns>The updated route details.</returns>
-        [HttpPut("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiValidationErrorResponse))]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ApiResponse))]
-        [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
-        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
-        public async Task<IActionResult> UpdateRoute(int id, [FromBody] UpdateRouteDto updateDto)
-        {
-            if (id != updateDto.Id)
-                return BadRequest(new
-                {
-                    StatusCode = 400,
-                    Message = "Bad Request, you have made",
-                    Errors = new[] { "Route ID in URL does not match ID in body" }
-                });
+        // [HttpPut("{id}")]
+        // [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse))]
+        // [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiValidationErrorResponse))]
+        // [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ApiResponse))]
+        // [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(ApiResponse))]
+        // [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ApiResponse))]
+        // public async Task<IActionResult> UpdateRoute(int id, [FromBody] UpdateRouteDto updateDto)
+        // {
+        //     if (id != updateDto.Id)
+        //         return BadRequest(new
+        //         {
+        //             StatusCode = 400,
+        //             Message = "Bad Request, you have made",
+        //             Errors = new[] { "Route ID in URL does not match ID in body" }
+        //         });
 
-            var result = await _routeService.UpdateRouteAsync(updateDto);
-            if (!result.IsSuccess)
-                return BadRequest(new
-                {
-                    StatusCode = 400,
-                    Message = "Bad Request, you have made",
-                    Errors = result.Errors
-                });
+        //     var result = await _routeService.UpdateRouteAsync(updateDto);
+        //     if (!result.IsSuccess)
+        //         return BadRequest(new
+        //         {
+        //             StatusCode = 400,
+        //             Message = "Bad Request, you have made",
+        //             Errors = result.Errors
+        //         });
 
-            return Ok(new
-            {
-                StatusCode = 200,
-                Message = "Route updated successfully",
-                Data = result.Data
-            });
-        }
+        //     return Ok(new
+        //     {
+        //         StatusCode = 200,
+        //         Message = "Route updated successfully",
+        //         Data = result.Data
+        //     });
+        // }
 
         /// <summary>
         /// Deletes a specific route.

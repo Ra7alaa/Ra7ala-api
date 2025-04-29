@@ -1,8 +1,7 @@
 namespace Domain.Entities
 {
-    public class SuperAdmin
+    public class SuperAdmin : BaseEntity<string>
     {
-        public string Id { get; set; } = string.Empty;
         public int CompanyId { get; set; }
         
         // Navigation properties

@@ -11,8 +11,15 @@ namespace Domain.Repositories.Interfaces
         ICityRepository Cities { get; }
         IStationRepository Stations { get; } 
         IUserRepository Users { get; }
-        
-        void Add<T>(T entity) where T : class;
+        IRouteRepository Routes { get; }
+
+        // Generic Repositories
+        IGenericRepository<RouteStation> RouteStations { get; }
+        IGenericRepository<SuperAdmin> SuperAdmins { get; }
+        IGenericRepository<Admin> Admins { get; }
+        IGenericRepository<Driver> Drivers { get; }
+        IGenericRepository<Passenger> Passengers { get; }
+
 
         // Save changes
         Task<int> SaveChangesAsync();

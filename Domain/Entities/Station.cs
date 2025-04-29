@@ -8,13 +8,11 @@ using System.Threading.Tasks;
 
 namespace Domain.Entities
 {
-    public class Station
+    public class Station : BaseEntity<int>
     {
-        public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public decimal Latitude { get; set; }
         public decimal Longitude { get; set; }
-        public bool IsDeleted { get; set; } = false;
         public int CityId { get; set; }
         public int? CompanyId { get; set; } = null;
 

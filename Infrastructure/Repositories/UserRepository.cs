@@ -1,10 +1,11 @@
-using Domain.Entities;
-using Domain.Enums;
-using Domain.Repositories.Interfaces;
-using Infrastructure.Data;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using Domain.Entities;
+using Domain.Repositories.Interfaces;
 using System.Security.Claims;
+using System.Threading.Tasks;
+using Infrastructure.Data;
+using Domain.Enums;
 
 namespace Infrastructure.Repositories
 {
@@ -95,6 +96,38 @@ namespace Infrastructure.Repositories
                 .Include(d => d.Company)
                 .Where(d => d.CompanyId == companyId)
                 .ToListAsync();
+        }
+
+        public async Task<bool> UserHasAccessToCompanyAsync(string userId, int companyId)
+        {
+            // Check if user is null
+            if (string.IsNullOrEmpty(userId))
+                return false;
+
+            // First check if user is SuperAdmin for this company
+            var superAdmin = await GetSuperAdminByUserIdAsync(userId);
+            if (superAdmin != null && superAdmin.CompanyId == companyId)
+                return true;
+
+            // Then check if user is Admin for this company
+            var admin = await GetAdminByUserIdAsync(userId);
+            if (admin != null && admin.CompanyId == companyId)
+                return true;
+
+            // User doesn't have access to this company
+            return false;
+        }
+
+        public async Task<bool> UserHasAccessToCompanyAsync(ClaimsPrincipal user, int companyId)
+        {
+            if (user == null)
+                return false;
+
+            var userId = _userManager.GetUserId(user);
+            if (string.IsNullOrEmpty(userId))
+                return false;
+
+            return await UserHasAccessToCompanyAsync(userId, companyId);
         }
     }
 }

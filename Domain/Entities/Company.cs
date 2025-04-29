@@ -6,9 +6,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Domain.Entities
 {
-    public class Company
+    public class Company : BaseEntity<int>
     {
-        public int Id { get; set; }
 
         [Required]
         [StringLength(100)]
@@ -38,7 +37,7 @@ namespace Domain.Entities
         // Registration status
         public bool IsApproved { get; set; } = false;
         public bool IsRejected { get; set; } = false;
-        public bool IsDeleted { get; set; } = false;
+
 
         // Timestamps
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;

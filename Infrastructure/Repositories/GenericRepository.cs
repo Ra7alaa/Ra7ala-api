@@ -20,16 +20,28 @@ namespace Infrastructure.Repositories
             _dbSet = context.Set<T>();
         }
 
+        // Read
         public async Task<IEnumerable<T>> GetAllAsync()
         {
-            return await _dbSet.ToListAsync();
+            var query = _dbSet.AsQueryable();
+            if (HasIsDeletedProperty())
+            {
+                query = query.Where(e => EF.Property<bool>(e, "IsDeleted") == false);
+            }
+            return await query.ToListAsync();
         }
 
         public async Task<T> GetByIdAsync(int id)
         {
-            return await _dbSet.FindAsync(id);
+            var query = _dbSet.AsQueryable();
+            if (HasIsDeletedProperty())
+            {
+                query = query.Where(e => EF.Property<bool>(e, "IsDeleted") == false);
+            }
+            return await query.FirstOrDefaultAsync(e => EF.Property<int>(e, "Id") == id);
         }
 
+        // Add
         public async Task AddAsync(T entity)
         {
             await _dbSet.AddAsync(entity);
@@ -40,11 +52,13 @@ namespace Infrastructure.Repositories
             await _dbSet.AddRangeAsync(entities);
         }
 
+        // Update
         public void Update(T entity)
         {
             _dbSet.Update(entity);
         }
 
+        // Delete
         public void Remove(T entity)
         {
             _dbSet.Remove(entity);
@@ -60,9 +74,11 @@ namespace Infrastructure.Repositories
             }
         }
 
-        public Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> expression)
+        // Helper method to check if entity has IsDeleted property
+        private bool HasIsDeletedProperty()
         {
-            throw new NotImplementedException();
+            var propertyInfo = typeof(T).GetProperty("IsDeleted");
+            return propertyInfo != null && propertyInfo.PropertyType == typeof(bool);
         }
     }
 }

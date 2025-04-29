@@ -1,9 +1,10 @@
 namespace Domain.Entities
 {
-    public class Passenger
+    public class Passenger : BaseEntity<string>
     {
-        public string Id { get; set; } = string.Empty;
-        
+        // Properties
+
+
         // Navigation property
         public AppUser AppUser { get; set; } = null!;
     }

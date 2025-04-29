@@ -9,17 +9,21 @@ using Company = Domain.Entities.Company;
 
 namespace Infrastructure.Repositories
 {
-    public class UnitOfWork : IUnitOfWork, IDisposable
+    public class UnitOfWork : IUnitOfWork
     {
         private readonly ApplicationDbContext _context;
-        private bool _disposed;
-        private ICompanyRepository _companyRepository;
         private readonly UserManager<AppUser> _userManager;
         private readonly SignInManager<AppUser> _signInManager;
+        private ICompanyRepository _companyRepository;
         private ICityRepository? _citiesRepository;
         private IStationRepository? _stationsRepository;
         private IUserRepository? _userRepository;
-
+        private IRouteRepository? _routeRepository;
+        private IGenericRepository<RouteStation>? _routeStationsRepository;
+        private IGenericRepository<SuperAdmin>? _superAdminsRepository;
+        private IGenericRepository<Admin>? _adminsRepository;
+        private IGenericRepository<Driver>? _driversRepository;
+        private IGenericRepository<Passenger>? _passengersRepository;
 
         public UnitOfWork(
             ApplicationDbContext context,
@@ -30,6 +34,8 @@ namespace Infrastructure.Repositories
             _userManager = userManager;
             _signInManager = signInManager;
         }
+
+        #region Custom Repositories
         public ICompanyRepository CompanyRepository => 
             _companyRepository ??= new CompanyRepository(_context);
 
@@ -42,37 +48,32 @@ namespace Infrastructure.Repositories
         public IUserRepository Users => 
             _userRepository ??= new UserRepository(_context, _userManager, _signInManager);
 
-        public void Add<T>(T entity) where T : class
-        {
-            _context.Set<T>().Add(entity);
-        }
+        public IRouteRepository Routes => 
+            _routeRepository ??= new RouteRepository(_context);
 
+        #endregion
+
+        #region Generic Repositories
+        public IGenericRepository<RouteStation> RouteStations => 
+            _routeStationsRepository ??= new GenericRepository<RouteStation>(_context);
+
+        public IGenericRepository<SuperAdmin> SuperAdmins => 
+            _superAdminsRepository ??= new GenericRepository<SuperAdmin>(_context);
+
+        public IGenericRepository<Admin> Admins => 
+            _adminsRepository ??= new GenericRepository<Admin>(_context);
+
+        public IGenericRepository<Driver> Drivers => 
+            _driversRepository ??= new GenericRepository<Driver>(_context);
+
+        public IGenericRepository<Passenger> Passengers => 
+            _passengersRepository ??= new GenericRepository<Passenger>(_context); 
+
+        #endregion
+        
         public async Task<int> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync();
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_disposed)
-            {
-                if (disposing)
-                {
-                    _context.Dispose();
-                }
-                _disposed = true;
-            }
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        ~UnitOfWork()
-        {
-            Dispose(false);
         }
     }
 }
