@@ -12,6 +12,7 @@ namespace Domain.Entities
         public string Address { get; set; } = string.Empty;
         public DateTime DateCreated { get; set; } = DateTime.UtcNow;
         public DateTime? LastLogin { get; set; }
+        public bool IsDeleted { get; set; } = false;
         
         // User type
         public UserType UserType { get; set; }
