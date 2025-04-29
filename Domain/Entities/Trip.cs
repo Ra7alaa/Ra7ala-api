@@ -13,6 +13,5 @@ namespace Domain.Entities
         public virtual Driver Driver { get; set; } = null!;
         public virtual Company Company { get; set; } = null!;
         public virtual ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
-
     }
 }
