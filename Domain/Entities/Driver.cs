@@ -2,9 +2,8 @@ using Domain.Enums;
 
 namespace Domain.Entities
 {
-    public class Driver
+    public class Driver : BaseEntity<string>
     {
-        public string Id { get; set; } = string.Empty;
         public int CompanyId { get; set; }
         public string LicenseNumber { get; set; } = string.Empty;
         public DateTime LicenseExpiryDate { get; set; }
@@ -15,5 +14,6 @@ namespace Domain.Entities
         // Navigation properties
         public AppUser AppUser { get; set; } = null!;
         public Company Company { get; set; } = null!;
+        public virtual ICollection<Trip> Trips { get; set; } = null!;
     }
 }

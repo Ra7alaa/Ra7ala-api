@@ -6,26 +6,22 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Domain.Entities
 {
-    public class Route
+    public class Route : BaseEntity<int>
     {
-        [Key]
-        public int Id { get; set; }
-        [Required]
-        [StringLength(100)]
-        public string Name { get; set; }
-        [Required]
-        public string DepartureCity { get; set; }
-        [Required]
-        public string ArrivalCity { get; set; }
-        public int Distance { get; set; } // in km
-        public int EstimatedDuration { get; set; } // in minutes
+        public string Name { get; set; } = string.Empty;
+        public int StartCityId { get; set; }
+        public int EndCityId { get; set; }
+        public int Distance { get; set; } 
+        public int EstimatedDuration { get; set; } 
         public int CompanyId { get; set; }
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation properties
-        public virtual Company Company { get; set; }
-        // public virtual ICollection<RouteStation> Stations { get; set; }
-        // public virtual ICollection<Trip> Trips { get; set; }
+        public virtual Company Company { get; set; } = null!;
+        public virtual City StartCity { get; set; } = null!;
+        public virtual City EndCity { get; set; } = null!;
+        public virtual ICollection<RouteStation> RouteStations { get; set; } = null!;
+        public virtual ICollection<Trip> Trips { get; set; } = null!;
     }
 }

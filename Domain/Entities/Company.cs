@@ -7,9 +7,8 @@ using Domain.Enums;
 
 namespace Domain.Entities
 {
-    public class Company
+    public class Company : BaseEntity<int>
     {
-        public int Id { get; set; }
 
         [Required]
         [StringLength(100)]

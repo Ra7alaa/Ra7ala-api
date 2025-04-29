@@ -46,6 +46,9 @@ namespace Presentation
             // Configure Station services
             builder.Services.AddStationServices();
 
+            // Configure Route services
+            builder.Services.AddRouteServices();
+
             // Configure Data Seed services
             builder.Services.AddDataSeedServices();
 
@@ -59,6 +62,9 @@ namespace Presentation
 
             // Use CORS middleware (should be before authentication)
             app.UseCorsMiddleware();
+
+            // Add static files middleware
+            app.UseStaticFiles();
 
             app.UseHttpsRedirection();
 

@@ -3,7 +3,9 @@ using Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Presentation.Models;
+using Presentation.Errors;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Presentation.Controllers
@@ -204,6 +206,118 @@ namespace Presentation.Controllers
             }
 
             return Ok(new ApiResponse(200, "Driver updated successfully"));
+        }
+
+        //[Authorize(Roles = "SuperAdmin")]
+        [HttpGet("super-admin/{id}")]
+        public async Task<ActionResult<SuperAdminProfileDto>> GetSuperAdminById(string id)
+        {
+            var result = await _authService.GetSuperAdminByIdAsync(id);
+            
+            if (!result.IsSuccess)
+            {
+                return NotFound(new ApiResponse(404, result.Errors.FirstOrDefault() ?? "SuperAdmin not found"));
+            }
+            
+            return Ok(result.Data);
+        }
+
+        //[Authorize(Roles = "Admin,SuperAdmin")]
+        [HttpGet("admin/{id}")]
+        public async Task<ActionResult<AdminProfileDto>> GetAdminById(string id)
+        {
+            var result = await _authService.GetAdminByIdAsync(id);
+            
+            if (!result.IsSuccess)
+            {
+                return NotFound(new ApiResponse(404, result.Errors.FirstOrDefault() ?? "Admin not found"));
+            }
+            
+            return Ok(result.Data);
+        }
+
+        //[Authorize(Roles = "Passenger,Admin,SuperAdmin")]
+        [HttpGet("passenger/{id}")]
+        public async Task<ActionResult<PassengerProfileDto>> GetPassengerById(string id)
+        {
+            var result = await _authService.GetPassengerByIdAsync(id);
+            
+            if (!result.IsSuccess)
+            {
+                return NotFound(new ApiResponse(404, result.Errors.FirstOrDefault() ?? "Passenger not found"));
+            }
+            
+            return Ok(result.Data);
+        }
+
+        //[Authorize(Roles = "Driver,Admin,SuperAdmin")]
+        [HttpGet("driver/{id}")]
+        public async Task<ActionResult<DriverProfileDto>> GetDriverById(string id)
+        {
+            var result = await _authService.GetDriverByIdAsync(id);
+            
+            if (!result.IsSuccess)
+            {
+                return NotFound(new ApiResponse(404, result.Errors.FirstOrDefault() ?? "Driver not found"));
+            }
+            
+            return Ok(result.Data);
+        }
+
+        [Authorize(Roles = "Owner")]
+        [HttpGet("system-owner")]
+        public async Task<ActionResult<SystemOwnerProfileDto>> GetSystemOwner()
+        {
+            var result = await _authService.GetSystemOwnerAsync();
+            
+            if (!result.IsSuccess)
+            {
+                return NotFound(new ApiResponse(404, result.Errors.FirstOrDefault() ?? "System Owner not found"));
+            }
+            
+            return Ok(result.Data);
+        }
+
+        [Authorize(Roles = "SuperAdmin")]
+        [HttpGet("admins/company")]
+        public async Task<ActionResult<IEnumerable<AdminProfileDto>>> GetAllAdminsInMyCompany()
+        {
+            var result = await _authService.GetAllAdminsInMyCompanyAsync(User);
+            
+            if (!result.IsSuccess)
+            {
+                return BadRequest(new ApiResponse(400, result.Errors.FirstOrDefault() ?? "Failed to retrieve admins"));
+            }
+            
+            return Ok(result.Data);
+        }
+
+        [Authorize(Roles = "SuperAdmin")]
+        [HttpGet("drivers/company")]
+        public async Task<ActionResult<IEnumerable<DriverProfileDto>>> GetAllDriversInMyCompany()
+        {
+            var result = await _authService.GetAllDriversInMyCompanyAsync(User);
+            
+            if (!result.IsSuccess)
+            {
+                return BadRequest(new ApiResponse(400, result.Errors.FirstOrDefault() ?? "Failed to retrieve drivers"));
+            }
+            
+            return Ok(result.Data);
+        }
+
+        [Authorize]
+        [HttpGet("my-profile")]
+        public async Task<ActionResult<object>> GetMyProfile()
+        {
+            var result = await _authService.GetMyProfileAsync(User);
+            
+            if (!result.IsSuccess)
+            {
+                return BadRequest(new ApiResponse(400, result.Errors.FirstOrDefault() ?? "Failed to retrieve profile"));
+            }
+            
+            return Ok(result.Data);
         }
     }
 }

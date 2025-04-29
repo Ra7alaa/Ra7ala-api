@@ -224,7 +224,7 @@ namespace Application.Services.Auth
             };
 
             // Add SuperAdmin to database
-            _unitOfWork.Add(superAdmin);
+            await _unitOfWork.SuperAdmins.AddAsync(superAdmin);
             await _unitOfWork.SaveChangesAsync();
 
             // Get company name for the email
@@ -298,7 +298,7 @@ namespace Application.Services.Auth
             };
 
             // Add Passenger to database
-            _unitOfWork.Add(passenger);
+            await _unitOfWork.Passengers.AddAsync(passenger);
             await _unitOfWork.SaveChangesAsync();
 
             return ServiceResult<IdentityResult>.Success(result);
@@ -405,7 +405,7 @@ namespace Application.Services.Auth
             };
 
             // Add Driver to database
-            _unitOfWork.Add(driver);
+            await _unitOfWork.Drivers.AddAsync(driver);
             await _unitOfWork.SaveChangesAsync();
 
             // Get company name for the email
@@ -523,7 +523,7 @@ namespace Application.Services.Auth
             };
 
             // Add Admin to database
-            _unitOfWork.Add(admin);
+            await _unitOfWork.Admins.AddAsync(admin);
             await _unitOfWork.SaveChangesAsync();
 
             // Get company name for the email
@@ -930,6 +930,428 @@ namespace Application.Services.Auth
 
         #endregion
 
+        #region User Profile
+        public async Task<ServiceResult<object>> GetMyProfileAsync(ClaimsPrincipal user)
+        {
+            // Authentication validation checks
+            if (user == null || !user.Identity.IsAuthenticated)
+            {
+                return ServiceResult<object>.Failure("Authentication required");
+            }
+
+            // Get the current user's ID
+            var userId = _userManager.GetUserId(user);
+            
+            if (string.IsNullOrEmpty(userId))
+            {
+                return ServiceResult<object>.Failure("User ID not found in authentication token");
+            }
+
+            // Get the user to determine the type
+            var appUser = await _userManager.FindByIdAsync(userId);
+            
+            if (appUser == null)
+            {
+                return ServiceResult<object>.Failure("User not found");
+            }
+
+            // Call the appropriate method based on user type
+            switch (appUser.UserType)
+            {
+                case UserType.SuperAdmin:
+                    var superAdminResult = await GetSuperAdminByIdAsync(userId);
+                    if (superAdminResult.IsSuccess)
+                        return ServiceResult<object>.Success(superAdminResult.Data);
+                    return ServiceResult<object>.Failure(superAdminResult.Errors);
+                    
+                case UserType.Admin:
+                    var adminResult = await GetAdminByIdAsync(userId);
+                    if (adminResult.IsSuccess)
+                        return ServiceResult<object>.Success(adminResult.Data);
+                    return ServiceResult<object>.Failure(adminResult.Errors);
+                    
+                case UserType.Driver:
+                    var driverResult = await GetDriverByIdAsync(userId);
+                    if (driverResult.IsSuccess)
+                        return ServiceResult<object>.Success(driverResult.Data);
+                    return ServiceResult<object>.Failure(driverResult.Errors);
+                    
+                case UserType.Passenger:
+                    var passengerResult = await GetPassengerByIdAsync(userId);
+                    if (passengerResult.IsSuccess)
+                        return ServiceResult<object>.Success(passengerResult.Data);
+                    return ServiceResult<object>.Failure(passengerResult.Errors);
+                    
+                case UserType.Owner:
+                    var ownerResult = await GetSystemOwnerAsync();
+                    if (ownerResult.IsSuccess)
+                        return ServiceResult<object>.Success(ownerResult.Data);
+                    return ServiceResult<object>.Failure(ownerResult.Errors);
+                    
+                default:
+                    return ServiceResult<object>.Failure($"User type {appUser.UserType} not supported");
+            }
+        }
+
+        public async Task<ServiceResult<SuperAdminProfileDto>> GetSuperAdminByIdAsync(string id)
+        {
+            // Validate input
+            if (string.IsNullOrEmpty(id))
+            {
+                return ServiceResult<SuperAdminProfileDto>.Failure("SuperAdmin ID cannot be empty");
+            }
+            
+            // Get the SuperAdmin entity with Company included
+            var superAdmin = await _unitOfWork.Users.GetSuperAdminByUserIdAsync(id);
+            
+            if (superAdmin == null)
+            {
+                return ServiceResult<SuperAdminProfileDto>.Failure($"SuperAdmin with ID {id} not found");
+            }
+            
+            // Get the AppUser entity
+            var appUser = await _userManager.FindByIdAsync(id);
+            
+            if (appUser == null)
+            {
+                return ServiceResult<SuperAdminProfileDto>.Failure($"User with ID {id} not found");
+            }
+            
+            // Create and return the profile DTO
+            var profileDto = new SuperAdminProfileDto
+            {
+                Id = appUser.Id,
+                FullName = appUser.FullName,
+                Email = appUser.Email ?? string.Empty,
+                PhoneNumber = appUser.PhoneNumber ?? string.Empty,
+                ProfilePictureUrl = appUser.ProfilePictureUrl,
+                DateOfBirth = appUser.DateOfBirth,
+                Address = appUser.Address,
+                DateCreated = appUser.DateCreated,
+                LastLogin = appUser.LastLogin,
+                CompanyId = superAdmin.CompanyId,
+                CompanyName = superAdmin.Company?.Name ?? string.Empty
+            };
+            
+            return ServiceResult<SuperAdminProfileDto>.Success(profileDto);
+        }
+
+        public async Task<ServiceResult<AdminProfileDto>> GetAdminByIdAsync(string id)
+        {
+            // Validate input
+            if (string.IsNullOrEmpty(id))
+            {
+                return ServiceResult<AdminProfileDto>.Failure("Admin ID cannot be empty");
+            }
+            
+            // Get the Admin entity with Company included
+            var admin = await _unitOfWork.Users.GetAdminByUserIdAsync(id);
+            
+            if (admin == null)
+            {
+                return ServiceResult<AdminProfileDto>.Failure($"Admin with ID {id} not found");
+            }
+            
+            // Get the AppUser entity
+            var appUser = await _userManager.FindByIdAsync(id);
+            
+            if (appUser == null)
+            {
+                return ServiceResult<AdminProfileDto>.Failure($"User with ID {id} not found");
+            }
+            
+            // Get the SuperAdmin who added this admin (if available)
+            string addedByName = string.Empty;
+            if (!string.IsNullOrEmpty(admin.AddedById))
+            {
+                var addedByUser = await _userManager.FindByIdAsync(admin.AddedById);
+                if (addedByUser != null)
+                {
+                    addedByName = addedByUser.FullName;
+                }
+            }
+            
+            // Create and return the profile DTO
+            var profileDto = new AdminProfileDto
+            {
+                Id = appUser.Id,
+                FullName = appUser.FullName,
+                Email = appUser.Email ?? string.Empty,
+                PhoneNumber = appUser.PhoneNumber ?? string.Empty,
+                ProfilePictureUrl = appUser.ProfilePictureUrl,
+                DateOfBirth = appUser.DateOfBirth,
+                Address = appUser.Address,
+                DateCreated = appUser.DateCreated,
+                LastLogin = appUser.LastLogin,
+                CompanyId = admin.CompanyId,
+                CompanyName = admin.Company?.Name ?? string.Empty,
+                Department = admin.Department,
+                AddedById = admin.AddedById,
+                AddedByName = addedByName
+            };
+            
+            return ServiceResult<AdminProfileDto>.Success(profileDto);
+        }
+
+        public async Task<ServiceResult<PassengerProfileDto>> GetPassengerByIdAsync(string id)
+        {
+            // Validate input
+            if (string.IsNullOrEmpty(id))
+            {
+                return ServiceResult<PassengerProfileDto>.Failure("Passenger ID cannot be empty");
+            }
+            
+            // Get the Passenger entity
+            var passenger = await _unitOfWork.Users.GetPassengerByUserIdAsync(id);
+            
+            if (passenger == null)
+            {
+                return ServiceResult<PassengerProfileDto>.Failure($"Passenger with ID {id} not found");
+            }
+            
+            // Get the AppUser entity
+            var appUser = await _userManager.FindByIdAsync(id);
+            
+            if (appUser == null)
+            {
+                return ServiceResult<PassengerProfileDto>.Failure($"User with ID {id} not found");
+            }
+            
+            // Create and return the profile DTO
+            var profileDto = new PassengerProfileDto
+            {
+                Id = appUser.Id,
+                FullName = appUser.FullName,
+                Email = appUser.Email ?? string.Empty,
+                PhoneNumber = appUser.PhoneNumber ?? string.Empty,
+                ProfilePictureUrl = appUser.ProfilePictureUrl,
+                DateOfBirth = appUser.DateOfBirth,
+                Address = appUser.Address,
+                DateCreated = appUser.DateCreated,
+                LastLogin = appUser.LastLogin,
+                // TravelPreferences = passenger.TravelPreferences,
+                // IsVerified = passenger.IsVerified,
+                // TotalTrips = passenger.TotalTrips
+            };
+            
+            return ServiceResult<PassengerProfileDto>.Success(profileDto);
+        }
+
+        public async Task<ServiceResult<DriverProfileDto>> GetDriverByIdAsync(string id)
+        {
+            // Validate input
+            if (string.IsNullOrEmpty(id))
+            {
+                return ServiceResult<DriverProfileDto>.Failure("Driver ID cannot be empty");
+            }
+            
+            // Get the Driver entity with Vehicle and Company included
+            var driver = await _unitOfWork.Users.GetDriverByUserIdAsync(id);
+            
+            if (driver == null)
+            {
+                return ServiceResult<DriverProfileDto>.Failure($"Driver with ID {id} not found");
+            }
+            
+            // Get the AppUser entity
+            var appUser = await _userManager.FindByIdAsync(id);
+            
+            if (appUser == null)
+            {
+                return ServiceResult<DriverProfileDto>.Failure($"User with ID {id} not found");
+            }
+            
+            // Create and return the profile DTO
+            var profileDto = new DriverProfileDto
+            {
+                Id = appUser.Id,
+                FullName = appUser.FullName,
+                Email = appUser.Email ?? "Not Found",
+                PhoneNumber = appUser.PhoneNumber ?? "Not Found",
+                ProfilePictureUrl = appUser.ProfilePictureUrl,
+                DateOfBirth = appUser.DateOfBirth,
+                Address = appUser.Address,
+                DateCreated = appUser.DateCreated,
+                LastLogin = appUser.LastLogin,
+                CompanyId = driver.CompanyId,
+                CompanyName = driver.Company?.Name ?? "Not Found",
+                LicenseNumber = driver.LicenseNumber,
+            };
+            
+            return ServiceResult<DriverProfileDto>.Success(profileDto);
+        }
+
+        public async Task<ServiceResult<SystemOwnerProfileDto>> GetSystemOwnerAsync()
+        {
+            // Get the system owner (UserType = Owner)
+            var systemOwner = await _unitOfWork.Users.GetSystemOwnerAsync();
+            
+            if (systemOwner == null)
+            {
+                return ServiceResult<SystemOwnerProfileDto>.Failure("System Owner not found");
+            }
+            
+            // Create and return the profile DTO
+            var profileDto = new SystemOwnerProfileDto
+            {
+                Id = systemOwner.Id,
+                FullName = systemOwner.FullName,
+                Email = systemOwner.Email ?? string.Empty,
+                UserName = systemOwner.UserName ?? string.Empty,
+                PhoneNumber = systemOwner.PhoneNumber ?? string.Empty,
+                ProfilePictureUrl = systemOwner.ProfilePictureUrl,
+                DateOfBirth = systemOwner.DateOfBirth,
+                Address = systemOwner.Address,
+                DateCreated = systemOwner.DateCreated,
+                LastLogin = systemOwner.LastLogin
+            };
+            
+            return ServiceResult<SystemOwnerProfileDto>.Success(profileDto);
+        }
+
+        #endregion
+
+        #region Get All Admins and Drivers in My Company
+        public async Task<ServiceResult<IEnumerable<AdminProfileDto>>> GetAllAdminsInMyCompanyAsync(ClaimsPrincipal user)
+        {
+            // Authentication validation checks
+            if (user == null || !user.Identity.IsAuthenticated)
+            {
+                return ServiceResult<IEnumerable<AdminProfileDto>>.Failure("Authentication required");
+            }
+
+            // Get the current user's ID
+            var currentUserId = _userManager.GetUserId(user);
+            
+            if (currentUserId == null)
+            {
+                return ServiceResult<IEnumerable<AdminProfileDto>>.Failure("User ID not found in authentication token");
+            }
+
+            // Get role claims to validate the user is actually a SuperAdmin
+            var roles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+            if (!roles.Contains("SuperAdmin"))
+            {
+                return ServiceResult<IEnumerable<AdminProfileDto>>.Failure("Only SuperAdmin can view all admins in their company");
+            }
+
+            // Get the SuperAdmin to find the company ID
+            var superAdmin = await _unitOfWork.Users.GetSuperAdminByUserIdAsync(currentUserId);
+            
+            if (superAdmin == null)
+            {
+                return ServiceResult<IEnumerable<AdminProfileDto>>.Failure("SuperAdmin record not found in database for authenticated user");
+            }
+
+            // Get all admins in this company
+            var admins = await _unitOfWork.Users.GetAdminsByCompanyIdAsync(superAdmin.CompanyId);
+            
+            // Map each admin to AdminProfileDto
+            var adminProfiles = new List<AdminProfileDto>();
+            
+            foreach (var admin in admins)
+            {
+                var appUser = await _userManager.FindByIdAsync(admin.Id);
+                
+                if (appUser == null) continue; // Skip if user not found
+                
+                // Get the name of who added this admin
+                string addedByName = string.Empty;
+                if (!string.IsNullOrEmpty(admin.AddedById))
+                {
+                    var addedByUser = await _userManager.FindByIdAsync(admin.AddedById);
+                    if (addedByUser != null)
+                    {
+                        addedByName = addedByUser.FullName;
+                    }
+                }
+                
+                adminProfiles.Add(new AdminProfileDto
+                {
+                    Id = appUser.Id,
+                    FullName = appUser.FullName,
+                    Email = appUser.Email ?? string.Empty,
+                    PhoneNumber = appUser.PhoneNumber ?? string.Empty,
+                    ProfilePictureUrl = appUser.ProfilePictureUrl,
+                    DateOfBirth = appUser.DateOfBirth,
+                    Address = appUser.Address,
+                    DateCreated = appUser.DateCreated,
+                    LastLogin = appUser.LastLogin,
+                    CompanyId = admin.CompanyId,
+                    CompanyName = admin.Company?.Name ?? string.Empty,
+                    Department = admin.Department,
+                    AddedById = admin.AddedById,
+                    AddedByName = addedByName
+                });
+            }
+            
+            return ServiceResult<IEnumerable<AdminProfileDto>>.Success(adminProfiles);
+        }
+
+        public async Task<ServiceResult<IEnumerable<DriverProfileDto>>> GetAllDriversInMyCompanyAsync(ClaimsPrincipal user)
+        {
+            // Authentication validation checks
+            if (user == null || !user.Identity.IsAuthenticated)
+            {
+                return ServiceResult<IEnumerable<DriverProfileDto>>.Failure("Authentication required");
+            }
+
+            // Get the current user's ID
+            var currentUserId = _userManager.GetUserId(user);
+            
+            if (currentUserId == null)
+            {
+                return ServiceResult<IEnumerable<DriverProfileDto>>.Failure("User ID not found in authentication token");
+            }
+
+            // Get role claims to validate the user is actually a SuperAdmin
+            var roles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+            if (!roles.Contains("SuperAdmin"))
+            {
+                return ServiceResult<IEnumerable<DriverProfileDto>>.Failure("Only SuperAdmin can view all drivers in their company");
+            }
+
+            // Get the SuperAdmin to find the company ID
+            var superAdmin = await _unitOfWork.Users.GetSuperAdminByUserIdAsync(currentUserId);
+            
+            if (superAdmin == null)
+            {
+                return ServiceResult<IEnumerable<DriverProfileDto>>.Failure("SuperAdmin record not found in database for authenticated user");
+            }
+
+            // Get all drivers in this company
+            var drivers = await _unitOfWork.Users.GetDriversByCompanyIdAsync(superAdmin.CompanyId);
+            
+            // Map each driver to DriverProfileDto
+            var driverProfiles = new List<DriverProfileDto>();
+            
+            foreach (var driver in drivers)
+            {
+                var appUser = await _userManager.FindByIdAsync(driver.Id);
+                
+                if (appUser == null) continue; // Skip if user not found
+                
+                driverProfiles.Add(new DriverProfileDto
+                {
+                    Id = appUser.Id,
+                    FullName = appUser.FullName,
+                    Email = appUser.Email ?? string.Empty,
+                    PhoneNumber = appUser.PhoneNumber ?? string.Empty,
+                    ProfilePictureUrl = appUser.ProfilePictureUrl,
+                    DateOfBirth = appUser.DateOfBirth,
+                    Address = appUser.Address,
+                    DateCreated = appUser.DateCreated,
+                    LastLogin = appUser.LastLogin,
+                    CompanyId = driver.CompanyId,
+                    CompanyName = driver.Company?.Name ?? string.Empty,
+                    LicenseNumber = driver.LicenseNumber
+                });
+            }
+            
+            return ServiceResult<IEnumerable<DriverProfileDto>>.Success(driverProfiles);
+        }
+        #endregion
+
         #region Helper Methods
 
         private string GenerateRandomPassword()
@@ -960,5 +1382,6 @@ namespace Application.Services.Auth
         }
 
         #endregion
+    
     }
 }

@@ -1,8 +1,7 @@
 namespace Domain.Entities
 {
-    public class Admin
+    public class Admin : BaseEntity<string>
     {
-        public string Id { get; set; } = string.Empty;
         public int CompanyId { get; set; }
         public string Department { get; set; } = string.Empty;
         public string AddedById { get; set; } = string.Empty;

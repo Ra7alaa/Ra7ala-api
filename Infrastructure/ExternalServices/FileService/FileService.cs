@@ -12,8 +12,8 @@ namespace Infrastructure.ExternalServices.FileService
         public FileService(IWebHostEnvironment webHostEnvironment)
         {
             _webHostEnvironment = webHostEnvironment;
-            // Use ContentRootPath instead of WebRootPath and create an 'Uploads' directory
-            _uploadsBaseDirectory = Path.Combine(_webHostEnvironment.ContentRootPath, "Uploads");
+            // Use WebRootPath instead of ContentRootPath to store in wwwroot
+            _uploadsBaseDirectory = Path.Combine(_webHostEnvironment.WebRootPath, "uploads");
             
             // Ensure the base uploads directory exists
             if (!Directory.Exists(_uploadsBaseDirectory))
@@ -24,6 +24,9 @@ namespace Infrastructure.ExternalServices.FileService
 
         public void DeleteFile(string filePath)
         {
+            if (string.IsNullOrEmpty(filePath))
+                return;
+                
             // Convert the relative path to absolute
             string fullPath = Path.Combine(_uploadsBaseDirectory, filePath);
             if (File.Exists(fullPath))
@@ -39,7 +42,7 @@ namespace Infrastructure.ExternalServices.FileService
                 return string.Empty;
             }
 
-            // Create folder within uploads directory
+            // Create folder within wwwroot/uploads directory
             string directoryPath = Path.Combine(_uploadsBaseDirectory, folderName);
             
             // Create directory if it doesn't exist
@@ -58,8 +61,8 @@ namespace Infrastructure.ExternalServices.FileService
                 await file.CopyToAsync(fileStream);
             }
 
-            // Return relative path (from uploads base directory)
-            return Path.Combine(folderName, uniqueFileName);
+            // Return relative path for URL generation
+            return $"/uploads/{folderName}/{uniqueFileName}";
         }
     }
 }
