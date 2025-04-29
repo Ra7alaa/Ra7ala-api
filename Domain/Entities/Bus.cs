@@ -28,6 +28,7 @@ namespace Domain.Entities
         public string AmenityDescription { get; set; } // AC, WiFi, etc.
        
         // Navigation properties
+        //relation with company
         public virtual Company Company { get; set; }
         // public virtual ICollection<Trip> Trips { get; set; } = new List<Trip>();
        // public virtual ICollection<Seat> Seats { get; set; } = new List<Seat>();
