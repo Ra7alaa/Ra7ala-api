@@ -12,7 +12,7 @@ namespace Domain.Repositories.Interfaces
     {
         // Retrieve a company with additional details by its ID
         Task<Company> GetCompanyWithDetailsAsync(int id);
-        
+
         // Retrieve a company by its ID
         Task<Company?> GetCompanyByIdAsync(int id);
 
@@ -21,10 +21,10 @@ namespace Domain.Repositories.Interfaces
 
         // Retrieve a list of companies that are pending approval
         Task<List<Company>> GetPendingCompaniesAsync();
-        
+
         // Update a company's status (approved or rejected) with an optional rejection reason
         Task<bool> UpdateCompanyStatusAsync(int id, bool isApproved, string? rejectionReason = null);
-        
+
         // Get paginated list of companies with optional filter
         Task<(IEnumerable<Company> Companies, int TotalCount)> GetPagedCompaniesAsync(
             int pageNumber,
@@ -39,8 +39,10 @@ namespace Domain.Repositories.Interfaces
 
         // Get the average rating of a company
         Task<int> GetAverageRatingAsync(int companyId);
-    
+
         // Check if a company exists that matches the given condition
         Task<bool> ExistsAsync(Expression<Func<Company, bool>> predicate);
+        Task<List<Domain.Entities.Company>> GetAllCompaniesAsync();
+        
     }
 }
