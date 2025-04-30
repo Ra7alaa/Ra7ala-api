@@ -15,6 +15,9 @@ namespace Presentation
             builder.Services.AddRepositoryServices();
 
             builder.Services.AddCompanyServices();
+            
+            builder.Services.AddBusServices();
+
 
             // Configure Identity services (must come before JWT services)
             builder.Services.AddIdentityServices(builder.Configuration);

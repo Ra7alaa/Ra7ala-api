@@ -11,6 +11,7 @@ namespace Infrastructure.Repositories
 {
     public class UnitOfWork : IUnitOfWork
     {
+        private IBusRepository? _busRepository;
         private readonly ApplicationDbContext _context;
         private readonly UserManager<AppUser> _userManager;
         private readonly SignInManager<AppUser> _signInManager;
@@ -38,6 +39,8 @@ namespace Infrastructure.Repositories
         #region Custom Repositories
         public ICompanyRepository CompanyRepository => 
             _companyRepository ??= new CompanyRepository(_context);
+        public IBusRepository Buses => 
+          _busRepository ??= new BusRepository(_context);
 
         public ICityRepository Cities => 
             _citiesRepository ??= new CityRepository(_context);

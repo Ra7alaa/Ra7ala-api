@@ -7,6 +7,7 @@ namespace Domain.Repositories.Interfaces
     {
 
         // Custom Repositories
+        IBusRepository Buses { get; }
         ICompanyRepository CompanyRepository { get; }
         ICityRepository Cities { get; }
         IStationRepository Stations { get; } 
