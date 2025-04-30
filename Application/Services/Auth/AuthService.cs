@@ -224,7 +224,7 @@ namespace Application.Services.Auth
             };
 
             // Add SuperAdmin to database
-            _unitOfWork.Add(superAdmin);
+            await _unitOfWork.SuperAdmins.AddAsync(superAdmin);
             await _unitOfWork.SaveChangesAsync();
 
             // Get company name for the email
@@ -298,7 +298,7 @@ namespace Application.Services.Auth
             };
 
             // Add Passenger to database
-            _unitOfWork.Add(passenger);
+            await _unitOfWork.Passengers.AddAsync(passenger);
             await _unitOfWork.SaveChangesAsync();
 
             return ServiceResult<IdentityResult>.Success(result);
@@ -405,7 +405,7 @@ namespace Application.Services.Auth
             };
 
             // Add Driver to database
-            _unitOfWork.Add(driver);
+            await _unitOfWork.Drivers.AddAsync(driver);
             await _unitOfWork.SaveChangesAsync();
 
             // Get company name for the email
@@ -523,7 +523,7 @@ namespace Application.Services.Auth
             };
 
             // Add Admin to database
-            _unitOfWork.Add(admin);
+            await _unitOfWork.Admins.AddAsync(admin);
             await _unitOfWork.SaveChangesAsync();
 
             // Get company name for the email

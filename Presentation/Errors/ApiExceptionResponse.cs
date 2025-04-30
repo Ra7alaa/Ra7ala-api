@@ -1,4 +1,4 @@
-namespace Presentation.Models
+namespace Presentation.Errors
 {
     public class ApiExceptionResponse : ApiResponse
 	{

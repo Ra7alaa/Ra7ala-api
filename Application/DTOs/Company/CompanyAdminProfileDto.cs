@@ -11,17 +11,10 @@ public class CompanyAdminProfileDto
     public string LogoUrl { get; set; } = string.Empty;
     public double AverageRating { get; set; }
     public int TotalRatings { get; set; }
-    public string SuperAdminName { get; set; } = string.Empty;
-    public string SuperAdminEmail { get; set; } = string.Empty;
-    public string SuperAdminPhone { get; set; } = string.Empty;
-    public DateTime CreatedDate { get; set; }
-    public DateTime? ApprovedDate { get; set; }
-    public List<AdminInfoDto> Admins { get; set; } = new();
+    
+    public ICollection<DriverDetailsDto> Drivers { get; set; } = new List<DriverDetailsDto>();
+    public ICollection<BusDetailsDto> Buses { get; set; } = new List<BusDetailsDto>();
+    public ICollection<RouteDetailsDto> Routes { get; set; } = new List<RouteDetailsDto>();
+    public ICollection<FeedbackDetailsDto> Feedbacks { get; set; } = new List<FeedbackDetailsDto>();
 }
 
-public class AdminInfoDto
-{
-    public string Name { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string Department { get; set; } = string.Empty;
-}

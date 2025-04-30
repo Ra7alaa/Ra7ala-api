@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Presentation.Models
+namespace Presentation.Errors
 {
     public class ApiValidationErrorResponse : ApiResponse
 	{

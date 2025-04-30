@@ -16,7 +16,7 @@ namespace Infrastructure.Data.Config
             
             // Configure relationship with Company
             builder.HasOne(r => r.Company)
-                   .WithMany()
+                   .WithMany(c => c.Routes)  
                    .HasForeignKey(r => r.CompanyId)
                    .OnDelete(DeleteBehavior.Restrict);
             

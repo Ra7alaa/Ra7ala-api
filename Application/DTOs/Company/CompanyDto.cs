@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
+using Domain.Enums;
+using Domain.Entities;
 
 namespace Application.DTOs.Company
 {
@@ -32,9 +34,8 @@ namespace Application.DTOs.Company
         
         [Required(ErrorMessage = "Logo URL is required")]
         public string LogoUrl { get; set; } = string.Empty;
-        public bool IsApproved { get; set; }
-        public bool IsRejected { get; set; }
-        public bool IsDeleted { get; set; }
+
+        public string Status { get; set; } = CompanyStatus.Pending.ToString();
 
         [Range(0, 5, ErrorMessage = "Rating must be between 0 and 5")]
         
