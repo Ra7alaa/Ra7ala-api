@@ -23,7 +23,7 @@ namespace Infrastructure.Repositories.Company
         public async Task<Domain.Entities.Company?> GetCompanyByIdAsync(int id)
         {
             return await _context.Set<Domain.Entities.Company>()
-                .FirstOrDefaultAsync(c => c.Id == id && c.Status != CompanyStatus.Deleted.ToString());
+                .FirstOrDefaultAsync(c => c.Id == id);
         }
         // Check if a user has access to a specific company based on their ID and the company's ID
         public async Task<bool> UserHasAccessToCompany(string userId, int companyId)
@@ -49,7 +49,7 @@ namespace Infrastructure.Repositories.Company
                 .Include(c => c.Routes)
                 .Include(c => c.Feedbacks)
                     .ThenInclude(sa => sa!.Passenger)
-                .FirstOrDefaultAsync(c => c.Id == id && c.Status == CompanyStatus.Approved.ToString())
+                .FirstOrDefaultAsync(c => c.Id == id)
                 ?? throw new Exception("Company not found or not approved.");
         }
 
