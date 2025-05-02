@@ -10,10 +10,10 @@ namespace Domain.Entities
         public string ContactAddress { get; set; } = string.Empty;
         public DateTime HireDate { get; set; }
         public DriverStatus DriverStatus { get; set; } = DriverStatus.Active;
-        
+
         // Navigation properties
         public AppUser AppUser { get; set; } = null!;
         public Company Company { get; set; } = null!;
-        public virtual ICollection<Trip> Trips { get; set; } = null!;
+        public virtual ICollection<Trip> Trips { get; set; } = new List<Trip>(); 
     }
 }

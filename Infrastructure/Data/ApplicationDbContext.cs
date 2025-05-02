@@ -24,6 +24,8 @@ namespace Infrastructure.Data
         public DbSet<Route> Routes { get; set; } = null!;  
         public DbSet<RouteStation> RouteStations { get; set; } = null!;
         public DbSet<CompanyFeedback> CompanyFeedbacks { get; set; } = null!;
+        public DbSet<Booking> Bookings { get; set; } = null!;
+        public DbSet<Ticket> Tickets { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

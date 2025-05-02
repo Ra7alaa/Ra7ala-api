@@ -1,0 +1,24 @@
+[
+    {
+      "Username": "ahmed_driver",
+      "Email": "ahmed@cairotransit.com",
+      "FullName": "Ahmed Sayed",
+      "Phone": "+20123456804",
+      "DateOfBirth": "1990-08-15T00:00:00Z",
+      "CompanyId": 1,
+      "LicenseNumber": "DL123456",
+      "LicenseExpiryDate": "2027-05-02T00:00:00Z",
+      "DriverStatus": "Active"
+    },
+    {
+      "Username": "ibrahim_driver",
+      "Email": "ibrahim@cairotransit.com",
+      "FullName": "Ibrahim Hassan",
+      "Phone": "+20123456805",
+      "DateOfBirth": "1988-09-22T00:00:00Z",
+      "CompanyId": 1,
+      "LicenseNumber": "DL123457",
+      "LicenseExpiryDate": "2028-05-02T00:00:00Z",
+      "DriverStatus": "Active"
+    }
+]

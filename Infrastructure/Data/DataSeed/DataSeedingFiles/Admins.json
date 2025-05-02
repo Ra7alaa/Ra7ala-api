@@ -1,0 +1,20 @@
+[
+    {
+      "Username": "mohamed_admin",
+      "Email": "mohamed@cairotransit.com",
+      "FullName": "Mohamed Samir",
+      "Phone": "+20123456794",
+      "DateOfBirth": "1988-02-20T00:00:00Z",
+      "CompanyId": 1,
+      "Department": "Operations"
+    },
+    {
+      "Username": "fatma_admin",
+      "Email": "fatma@cairotransit.com",
+      "FullName": "Fatma Mahmoud",
+      "Phone": "+20123456795",
+      "DateOfBirth": "1990-04-15T00:00:00Z",
+      "CompanyId": 1,
+      "Department": "Customer Support"
+    }
+]

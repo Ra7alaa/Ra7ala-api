@@ -18,9 +18,9 @@ namespace Domain.Entities
         public UserType UserType { get; set; }
         
         // Navigation properties
-        public SuperAdmin? SuperAdmin { get; set; }
-        public Admin? Admin { get; set; }
-        public Driver? Driver { get; set; }
-        public Passenger? Passenger { get; set; }
+        public virtual SuperAdmin? SuperAdmin { get; set; }
+        public virtual Admin? Admin { get; set; }
+        public virtual Driver? Driver { get; set; }
+        public virtual Passenger? Passenger { get; set; }
     }
 }

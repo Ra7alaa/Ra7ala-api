@@ -21,6 +21,47 @@ namespace Infrastructure.Data.Config
                    .WithMany(d => d.Trips)
                    .HasForeignKey(t => t.DriverId)
                    .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure relationship with Company
+            builder.HasOne(t => t.Company)
+                   .WithMany(c => c.Trips)
+                   .HasForeignKey(t => t.CompanyId)
+                   .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure relationship with Bus
+            builder.HasOne(t => t.Bus)
+                   .WithMany()
+                   .HasForeignKey(t => t.BusId)
+                   .IsRequired(false)
+                   .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure relationship with Tickets
+            builder.HasMany(t => t.Tickets)
+                   .WithOne(t => t.Trip)
+                   .HasForeignKey(t => t.TripId)
+                   .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure relationship with Bookings
+            builder.HasMany(t => t.Bookings)
+                   .WithOne(b => b.Trip)
+                   .HasForeignKey(b => b.TripId)
+                   .OnDelete(DeleteBehavior.Restrict); 
+
+            // Configure relationship with TripStations
+            builder.HasMany(t => t.TripStations)
+                   .WithOne(ts => ts.Trip)
+                   .HasForeignKey(ts => ts.TripId)
+                   .OnDelete(DeleteBehavior.Cascade); 
+
+            // Configure properties
+            builder.Property(t => t.AvailableSeats)
+                   .IsRequired();
+
+            builder.Property(t => t.DepartureTime)
+                   .IsRequired();
+
+            builder.Property(t => t.IsCompleted)
+                   .IsRequired();
         }
     }
 }

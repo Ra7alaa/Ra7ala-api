@@ -1,0 +1,46 @@
+[
+    {
+      "Id": 1,
+      "Name": "Cairo Transit",
+      "Email": "info@cairotransit.com",
+      "Phone": "+20223456789",
+      "Address": "10 Ramses Square, Cairo",
+      "Description": "Leading transportation company in Cairo",
+      "LogoUrl": "cairo_transit_logo.png",
+      "Status": "Approved",
+      "CreatedDate": "2024-11-02T00:00:00Z",
+      "ApprovedDate": "2024-11-05T00:00:00Z",
+      "AverageRating": 0,
+      "TotalRatings": 0,
+      "SuperAdmin": {
+        "Username": "karim_superadmin",
+        "Email": "karim@cairotransit.com",
+        "FullName": "Karim Hassan",
+        "Phone": "+20123456789",
+        "DateOfBirth": "1980-03-15T00:00:00Z",
+        "Address": "10 Ramses Square, Cairo"
+      }
+    },
+    {
+      "Id": 2,
+      "Name": "Alexandria Rides",
+      "Email": "contact@alexrides.com",
+      "Phone": "+20345678912",
+      "Address": "15 Corniche Road, Alexandria",
+      "Description": "Premium transportation in Alexandria",
+      "LogoUrl": "alex_rides_logo.png",
+      "Status": "Approved",
+      "CreatedDate": "2024-12-02T00:00:00Z",
+      "ApprovedDate": "2024-12-04T00:00:00Z",
+      "AverageRating": 0,
+      "TotalRatings": 0,
+      "SuperAdmin": {
+        "Username": "nour_superadmin",
+        "Email": "nour@alexrides.com",
+        "FullName": "Nour Ahmed",
+        "Phone": "+20123456790",
+        "DateOfBirth": "1979-07-22T00:00:00Z",
+        "Address": "15 Corniche Road, Alexandria"
+      }
+    }
+]

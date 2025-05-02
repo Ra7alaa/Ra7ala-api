@@ -54,7 +54,7 @@ namespace Domain.Entities
         public ICollection<Admin> Admins { get; set; } = new List<Admin>();
         public ICollection<Driver> Drivers { get; set; } = new List<Driver>();
         public virtual ICollection<Bus> Buses { get; set; } = new List<Bus>();
-        // public virtual ICollection<Trip> Trips { get; set; } = new List<Trip>();
+        public virtual ICollection<Trip> Trips { get; set; } = new List<Trip>();
         public virtual ICollection<Route> Routes { get; set; } = new List<Route>();
         public virtual ICollection<CompanyFeedback> Feedbacks { get; set; } = new List<CompanyFeedback>();
 

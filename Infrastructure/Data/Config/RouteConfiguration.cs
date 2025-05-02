@@ -9,38 +9,40 @@ namespace Infrastructure.Data.Config
         public void Configure(EntityTypeBuilder<Route> builder)
         {
             builder.HasKey(r => r.Id);
-            
+
             builder.Property(r => r.Name)
                    .IsRequired()
                    .HasMaxLength(100);
-            
+
             // Configure relationship with Company
             builder.HasOne(r => r.Company)
-                   .WithMany(c => c.Routes)  
+                   .WithMany(c => c.Routes)
                    .HasForeignKey(r => r.CompanyId)
                    .OnDelete(DeleteBehavior.Restrict);
-            
+
             // Configure relationship with StartCity
             builder.HasOne(r => r.StartCity)
                    .WithMany()
                    .HasForeignKey(r => r.StartCityId)
                    .OnDelete(DeleteBehavior.Restrict);
-            
+
             // Configure relationship with EndCity
             builder.HasOne(r => r.EndCity)
                    .WithMany()
                    .HasForeignKey(r => r.EndCityId)
                    .OnDelete(DeleteBehavior.Restrict);
-            
+
             // Configure one-to-many relationship with RouteStation
             builder.HasMany(r => r.RouteStations)
                    .WithOne(rs => rs.Route)
-                   .HasForeignKey(rs => rs.RouteId);
-            
+                   .HasForeignKey(rs => rs.RouteId)
+                   .OnDelete(DeleteBehavior.Cascade); // Modification: Changed to Cascade to delete RouteStations when Route is deleted
+
             // Configure one-to-many relationship with Trip
             builder.HasMany(r => r.Trips)
                    .WithOne(t => t.Route)
-                   .HasForeignKey(t => t.RouteId);
+                   .HasForeignKey(t => t.RouteId)
+                   .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

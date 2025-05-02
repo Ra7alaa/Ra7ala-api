@@ -1,0 +1,18 @@
+[
+    {
+      "Username": "sara_passenger",
+      "Email": "sara@example.com",
+      "FullName": "Sara Ahmed",
+      "Phone": "+20123456814",
+      "DateOfBirth": "1995-04-12T00:00:00Z",
+      "Address": "25 El-Tahrir Street, Cairo"
+    },
+    {
+      "Username": "mohamed_passenger",
+      "Email": "mohamed.p@example.com",
+      "FullName": "Mohamed Ali",
+      "Phone": "+20123456815",
+      "DateOfBirth": "1992-07-08T00:00:00Z",
+      "Address": "10 El-Horreya Road, Alexandria"
+    } 
+  ]

@@ -1,0 +1,32 @@
+[
+    {
+      "Id": 1,
+      "RegistrationNumber": "CAI-1234",
+      "Capacity": 50,
+      "Model": "Mercedes-Benz Sprinter",
+      "YearOfManufacture": 2020,
+      "IsActive": true,
+      "CompanyId": 1,
+      "AmenityDescription": "Wi-Fi, Air Conditioning, USB Charging"
+    },
+    {
+      "Id": 2,
+      "RegistrationNumber": "CAI-5678",
+      "Capacity": 40,
+      "Model": "Volvo B7R",
+      "YearOfManufacture": 2019,
+      "IsActive": true,
+      "CompanyId": 1,
+      "AmenityDescription": "Wi-Fi, Reclining Seats"
+    },
+    {
+      "Id": 3,
+      "RegistrationNumber": "ALX-9012",
+      "Capacity": 45,
+      "Model": "Scania Touring",
+      "YearOfManufacture": 2021,
+      "IsActive": true,
+      "CompanyId": 2,
+      "AmenityDescription": "Wi-Fi, Air Conditioning, TV"
+    }
+  ]
