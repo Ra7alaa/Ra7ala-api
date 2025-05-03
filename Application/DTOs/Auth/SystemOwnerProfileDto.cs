@@ -14,5 +14,6 @@ namespace Application.DTOs.Auth
         public string Address { get; set; } = string.Empty;
         public DateTime DateCreated { get; set; }
         public DateTime? LastLogin { get; set; }
+        public string UserType { get; set; } = "Owner";
     }
 }

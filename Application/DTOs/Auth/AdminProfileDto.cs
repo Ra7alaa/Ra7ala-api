@@ -18,5 +18,6 @@ namespace Application.DTOs.Auth
         public string Department { get; set; } = string.Empty;
         public string AddedById { get; set; } = string.Empty;
         public string AddedByName { get; set; } = string.Empty;
+        public string UerType { get; set; } = "Admin";
     }
 }

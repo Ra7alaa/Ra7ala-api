@@ -14,5 +14,6 @@ namespace Application.DTOs.Auth
         // public string? TravelPreferences { get; set; }
         // public bool IsVerified { get; set; }
         // public int? TotalTrips { get; set; }
+        public string UserType { get; set; } = "Passenger";
     }
 }

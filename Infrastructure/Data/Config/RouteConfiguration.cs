@@ -36,13 +36,17 @@ namespace Infrastructure.Data.Config
             builder.HasMany(r => r.RouteStations)
                    .WithOne(rs => rs.Route)
                    .HasForeignKey(rs => rs.RouteId)
-                   .OnDelete(DeleteBehavior.Cascade); // Modification: Changed to Cascade to delete RouteStations when Route is deleted
+                   .OnDelete(DeleteBehavior.Cascade);
 
             // Configure one-to-many relationship with Trip
             builder.HasMany(r => r.Trips)
                    .WithOne(t => t.Route)
                    .HasForeignKey(t => t.RouteId)
                    .OnDelete(DeleteBehavior.Restrict);
+
+            // Add indexes for performance
+            builder.HasIndex(r => r.CompanyId);
+            builder.HasIndex(r => r.Name);
         }
     }
 }

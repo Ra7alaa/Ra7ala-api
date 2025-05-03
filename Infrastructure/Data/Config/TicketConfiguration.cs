@@ -44,6 +44,14 @@ namespace Infrastructure.Data.Config
 
             builder.Property(t => t.IsUsed)
                    .IsRequired();
+                   
+            // Configure TicketCode property
+            builder.Property(t => t.TicketCode)
+                   .IsRequired()
+                   .HasMaxLength(4);
+                   
+            // Add an index on TicketCode for faster lookups
+            builder.HasIndex(t => t.TicketCode);
         }
     }
 }

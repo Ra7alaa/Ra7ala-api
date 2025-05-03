@@ -18,7 +18,6 @@ namespace Presentation
             
             builder.Services.AddBusServices();
 
-
             // Configure Identity services (must come before JWT services)
             builder.Services.AddIdentityServices(builder.Configuration);
 
@@ -51,6 +50,12 @@ namespace Presentation
 
             // Configure Route services
             builder.Services.AddRouteServices();
+
+            // Configure Trip services
+            builder.Services.AddTripServices();
+            
+            // Configure Booking services
+            builder.Services.AddBookingServices();
 
             // Configure Data Seed services
             builder.Services.AddDataSeedServices();

@@ -9,6 +9,7 @@ namespace Domain.Entities
         public decimal Price { get; set; }
         public DateTime PurchaseDate { get; set; } = DateTime.UtcNow;
         public bool IsUsed { get; set; } = false;
+        public string TicketCode { get; set; } = string.Empty;
 
         // Navigation properties
         public virtual Trip Trip { get; set; } = null!;

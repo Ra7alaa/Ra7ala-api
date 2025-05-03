@@ -17,5 +17,6 @@ namespace Application.DTOs.Auth
         public string CompanyName { get; set; } = string.Empty;
         public string LicenseNumber { get; set; } = string.Empty;
         public DriverStatus driverStatus { get; set; }
+        public string UserType { get; set; } = "Driver";
     }
 }

@@ -14,7 +14,7 @@ namespace Infrastructure.Data.Config
             builder.HasOne(ts => ts.Trip)
                    .WithMany(t => t.TripStations)
                    .HasForeignKey(ts => ts.TripId)
-                   .OnDelete(DeleteBehavior.Cascade); 
+                   .OnDelete(DeleteBehavior.Cascade);
 
             // Configure relationship with Station
             builder.HasOne(ts => ts.Station)
@@ -24,14 +24,22 @@ namespace Infrastructure.Data.Config
 
             // Create a unique constraint for trip-sequence combination
             builder.HasIndex(ts => new { ts.TripId, ts.SequenceNumber })
-                   .IsUnique(); 
+                   .IsUnique();
 
             // Configure properties
             builder.Property(ts => ts.ArrivalTime)
+                   .IsRequired(false); // Allow null for first station
+
+            builder.Property(ts => ts.DepartureTime)
                    .IsRequired();
 
             builder.Property(ts => ts.IsActive)
                    .IsRequired();
+
+            // Add indexes for performance
+            builder.HasIndex(ts => ts.TripId);
+            builder.HasIndex(ts => ts.StationId);
+            builder.HasIndex(ts => ts.DepartureTime);
         }
     }
 }

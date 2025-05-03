@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Infrastructure.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class FixMigration02 : Migration
+    public partial class FirstMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -419,6 +419,7 @@ namespace Infrastructure.Data.Migrations
                     IsCompleted = table.Column<bool>(type: "bit", nullable: false),
                     AvailableSeats = table.Column<int>(type: "int", nullable: false),
                     CompanyId = table.Column<int>(type: "int", nullable: false),
+                    Price = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     BusId1 = table.Column<int>(type: "int", nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
@@ -526,8 +527,8 @@ namespace Infrastructure.Data.Migrations
                     PassengerId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     TripId = table.Column<int>(type: "int", nullable: false),
                     BookingDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    TotalPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    TotalPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    Status = table.Column<int>(type: "int", maxLength: 50, nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -548,7 +549,7 @@ namespace Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "TripStation",
+                name: "TripStations",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -556,22 +557,22 @@ namespace Infrastructure.Data.Migrations
                     TripId = table.Column<int>(type: "int", nullable: false),
                     StationId = table.Column<int>(type: "int", nullable: false),
                     SequenceNumber = table.Column<int>(type: "int", nullable: false),
-                    ArrivalTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ArrivalTime = table.Column<DateTime>(type: "datetime2", nullable: true),
                     DepartureTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TripStation", x => x.Id);
+                    table.PrimaryKey("PK_TripStations", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_TripStation_Stations_StationId",
+                        name: "FK_TripStations_Stations_StationId",
                         column: x => x.StationId,
                         principalTable: "Stations",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_TripStation_Trips_TripId",
+                        name: "FK_TripStations_Trips_TripId",
                         column: x => x.TripId,
                         principalTable: "Trips",
                         principalColumn: "Id",
@@ -672,9 +673,19 @@ namespace Infrastructure.Data.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Bookings_BookingDate",
+                table: "Bookings",
+                column: "BookingDate");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Bookings_PassengerId",
                 table: "Bookings",
                 column: "PassengerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Bookings_Status",
+                table: "Bookings",
+                column: "Status");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Bookings_TripId",
@@ -710,6 +721,11 @@ namespace Infrastructure.Data.Migrations
                 name: "IX_Routes_EndCityId",
                 table: "Routes",
                 column: "EndCityId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Routes_Name",
+                table: "Routes",
+                column: "Name");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Routes_StartCityId",
@@ -781,9 +797,19 @@ namespace Infrastructure.Data.Migrations
                 column: "CompanyId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Trips_DepartureTime",
+                table: "Trips",
+                column: "DepartureTime");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Trips_DriverId",
                 table: "Trips",
                 column: "DriverId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Trips_Price",
+                table: "Trips",
+                column: "Price");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Trips_RouteId",
@@ -791,13 +817,23 @@ namespace Infrastructure.Data.Migrations
                 column: "RouteId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TripStation_StationId",
-                table: "TripStation",
+                name: "IX_TripStations_DepartureTime",
+                table: "TripStations",
+                column: "DepartureTime");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TripStations_StationId",
+                table: "TripStations",
                 column: "StationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TripStation_TripId_SequenceNumber",
-                table: "TripStation",
+                name: "IX_TripStations_TripId",
+                table: "TripStations",
+                column: "TripId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TripStations_TripId_SequenceNumber",
+                table: "TripStations",
                 columns: new[] { "TripId", "SequenceNumber" },
                 unique: true);
         }
@@ -833,7 +869,7 @@ namespace Infrastructure.Data.Migrations
                 name: "Tickets");
 
             migrationBuilder.DropTable(
-                name: "TripStation");
+                name: "TripStations");
 
             migrationBuilder.DropTable(
                 name: "SuperAdmins");
