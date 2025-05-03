@@ -53,6 +53,9 @@ namespace Presentation
 
             // Configure Trip services
             builder.Services.AddTripServices();
+            
+            // Configure Booking services
+            builder.Services.AddBookingServices();
 
             // Configure Data Seed services
             builder.Services.AddDataSeedServices();

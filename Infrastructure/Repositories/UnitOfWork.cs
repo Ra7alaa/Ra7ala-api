@@ -20,6 +20,8 @@ namespace Infrastructure.Repositories
         private IUserRepository? _userRepository;
         private IRouteRepository? _routeRepository;
         private ITripRepository? _tripRepository;
+        private IBookingRepository? _bookingRepository;
+        private ITicketRepository? _ticketRepository;
         private IGenericRepository<RouteStation>? _routeStationsRepository;
         private IGenericRepository<SuperAdmin>? _superAdminsRepository;
         private IGenericRepository<Admin>? _adminsRepository;
@@ -57,6 +59,12 @@ namespace Infrastructure.Repositories
 
         public ITripRepository Trips => 
             _tripRepository ??= new TripRepository(_context);
+            
+        public IBookingRepository Bookings =>
+            _bookingRepository ??= new BookingRepository(_context);
+            
+        public ITicketRepository Tickets =>
+            _ticketRepository ??= new TicketRepository(_context);
         
         #endregion
 

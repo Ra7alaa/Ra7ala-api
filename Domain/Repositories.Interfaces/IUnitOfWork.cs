@@ -13,7 +13,9 @@ namespace Domain.Repositories.Interfaces
         IStationRepository Stations { get; }
         IUserRepository Users { get; }
         IRouteRepository Routes { get; }
-        ITripRepository Trips { get; }  // Added Trip repository
+        ITripRepository Trips { get; }
+        IBookingRepository Bookings { get; }
+        ITicketRepository Tickets { get; }
 
         // Generic Repositories
         IGenericRepository<RouteStation> RouteStations { get; }
