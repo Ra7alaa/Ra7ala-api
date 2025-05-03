@@ -46,6 +46,7 @@ namespace Application.DTOs.Trip
         public string DriverPhoneNumber { get; set; } = string.Empty; // Added driver phone number
         public int? BusId { get; set; }
         public string BusRegistrationNumber { get; set; } = string.Empty;
+        public string AmenityDescription { get; set; } = string.Empty;
         public bool IsCompleted { get; set; }
         public int AvailableSeats { get; set; }
         public int CompanyId { get; set; }

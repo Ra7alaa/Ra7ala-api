@@ -321,6 +321,7 @@ namespace Application.Services.Trip
                 DriverPhoneNumber = trip.Driver?.AppUser?.PhoneNumber ?? string.Empty,
                 BusId = trip.BusId,
                 BusRegistrationNumber = trip.Bus?.RegistrationNumber ?? string.Empty,
+                AmenityDescription = trip.Bus?.AmenityDescription ?? string.Empty,
                 IsCompleted = trip.IsCompleted,
                 AvailableSeats = trip.AvailableSeats,
                 CompanyId = trip.CompanyId,

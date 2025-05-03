@@ -57,6 +57,9 @@ namespace Presentation
             // Configure Booking services
             builder.Services.AddBookingServices();
 
+            // Configure ChatBot services
+            builder.Services.AddChatBotServices(builder.Configuration);
+
             // Configure Data Seed services
             builder.Services.AddDataSeedServices();
 
