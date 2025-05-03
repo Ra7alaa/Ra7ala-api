@@ -61,8 +61,12 @@ namespace Infrastructure.Data.DataSeed
         
         // Add new seeding methods
         await SeedBusesAsync();
+        // In SeedAsync method
         await SeedRoutesAsync();
+        await SeedRouteStationsAsync();  
         await SeedTripsAsync();
+        await SeedTripStationsAsync();  
+      
         //await SeedBookingsAndTicketsAsync();
 
         _logger.LogInformation("Database seeding completed successfully!");
@@ -756,6 +760,116 @@ namespace Infrastructure.Data.DataSeed
         }    
         //new dataseed
         //dataseed methods
+        private async Task SeedRouteStationsAsync()
+{
+    _logger.LogInformation("Seeding route stations...");
+    
+    if (!await _context.RouteStations.AnyAsync())
+    {
+        var routes = await _context.Routes
+            .Include(r => r.StartCity)
+                .ThenInclude(c => c.Stations)
+            .Include(r => r.EndCity)
+                .ThenInclude(c => c.Stations)
+            .ToListAsync();
+
+        var routeStations = new List<RouteStation>();
+        
+        foreach (var route in routes)
+        {
+            // Get stations from start city
+            var startCityStations = route.StartCity.Stations
+                .OrderBy(x => Guid.NewGuid()) // Random order
+                .Take(2) // Take 2 stations from start city
+                .ToList();
+
+            // Get stations from end city
+            var endCityStations = route.EndCity.Stations
+                .OrderBy(x => Guid.NewGuid()) // Random order
+                .Take(2) // Take 2 stations from end city
+                .ToList();
+
+            var sequenceNumber = 1;
+
+            // Add start city stations
+            foreach (var station in startCityStations)
+            {
+                routeStations.Add(new RouteStation
+                {
+                    RouteId = route.Id,
+                    StationId = station.Id,
+                    SequenceNumber = sequenceNumber++,
+                    IsActive = true
+                });
+            }
+
+            // Add end city stations
+            foreach (var station in endCityStations)
+            {
+                routeStations.Add(new RouteStation
+                {
+                    RouteId = route.Id,
+                    StationId = station.Id,
+                    SequenceNumber = sequenceNumber++,
+                    IsActive = true
+                });
+            }
+        }
+
+        await _context.RouteStations.AddRangeAsync(routeStations);
+        await _context.SaveChangesAsync();
+        _logger.LogInformation("Added {Count} route stations", routeStations.Count);
+    }
+}
+
+private async Task SeedTripStationsAsync()
+{
+    _logger.LogInformation("Seeding trip stations...");
+    
+    if (!await _context.TripStations.AnyAsync())
+    {
+        var trips = await _context.Trips
+            .Include(t => t.Route)
+                .ThenInclude(r => r.RouteStations)
+                    .ThenInclude(rs => rs.Station)
+            .ToListAsync();
+
+        var tripStations = new List<TripStation>();
+        
+        foreach (var trip in trips)
+        {
+            var routeStations = trip.Route.RouteStations
+                .OrderBy(rs => rs.SequenceNumber)
+                .ToList();
+
+            for (int i = 0; i < routeStations.Count; i++)
+            {
+                var routeStation = routeStations[i];
+                var baseTime = trip.DepartureTime;
+                var minutesPerStation = trip.Route.EstimatedDuration / (routeStations.Count - 1);
+
+                tripStations.Add(new TripStation
+                {
+                    TripId = trip.Id,
+                    StationId = routeStation.StationId,
+                    SequenceNumber = routeStation.SequenceNumber,
+                    // First station has no arrival time
+                    ArrivalTime = i == 0 ? null : baseTime.AddMinutes(minutesPerStation * (i)),
+                    // Last station has arrival time as departure time
+                    DepartureTime = i == routeStations.Count - 1 
+                        ? baseTime.AddMinutes(minutesPerStation * i)
+                        : baseTime.AddMinutes(minutesPerStation * i + 5), // 5 minutes stop at each station
+                    IsActive = true
+                });
+            }
+        }
+
+        await _context.TripStations.AddRangeAsync(tripStations);
+        await _context.SaveChangesAsync();
+        _logger.LogInformation("Added {Count} trip stations", tripStations.Count);
+    }
+}
+
         private async Task SeedBusesAsync()
 {
     _logger.LogInformation("Seeding buses...");
