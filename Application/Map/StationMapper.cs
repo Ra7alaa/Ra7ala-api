@@ -59,7 +59,7 @@ namespace Application.Map
                 Latitude = stationDto.Latitude,
                 Longitude = stationDto.Longitude,
                 CityId = stationDto.CityId,
-                CompanyId = stationDto.CompanyId,
+                CompanyId = null, // System stations always have CompanyId = null
                 IsDeleted = false
             };
         }
@@ -87,12 +87,12 @@ namespace Application.Map
             existingStation.Latitude = stationDto.Latitude;
             existingStation.Longitude = stationDto.Longitude;
             existingStation.CityId = stationDto.CityId;
-            existingStation.CompanyId = stationDto.CompanyId;
+            existingStation.CompanyId = null; // System stations always have CompanyId = null
 
             return existingStation;
         }
 
-        // طريقة جديدة لتحويل المحطة إلى DTO المخصص للعرض ضمن المدن
+        // New method to convert a station to a DTO for display within cities
         public static StationInCityDto ToStationInCityDto(this Station station)
         {
             if (station == null)
@@ -108,10 +108,42 @@ namespace Application.Map
             };
         }
 
-        // طريقة لتحويل مجموعة من المحطات إلى قائمة DTOs مخصصة للعرض ضمن المدن
+        // Method to convert a collection of stations to a list of DTOs for display within cities
         public static IEnumerable<StationInCityDto> ToStationInCityDtoList(this IEnumerable<Station> stations)
         {
             return stations?.Select(s => s.ToStationInCityDto()).ToList();
+        }
+
+        // Convert CompanyStationAddUpdateDto to Station entity
+        public static Station ToEntity(this CompanyStationAddUpdateDto companyStationDto)
+        {
+            if (companyStationDto == null)
+                return null;
+
+            return new Station
+            {
+                Name = companyStationDto.Name,
+                Latitude = companyStationDto.Latitude,
+                Longitude = companyStationDto.Longitude,
+                CityId = companyStationDto.CityId,
+                CompanyId = companyStationDto.CompanyId, // CompanyId is required here
+                IsDeleted = false
+            };
+        }
+
+        // Update existing Station entity using CompanyStationAddUpdateDto
+        public static Station ToEntity(this CompanyStationAddUpdateDto companyStationDto, Station existingStation)
+        {
+            if (companyStationDto == null || existingStation == null)
+                return existingStation;
+
+            existingStation.Name = companyStationDto.Name;
+            existingStation.Latitude = companyStationDto.Latitude;
+            existingStation.Longitude = companyStationDto.Longitude;
+            existingStation.CityId = companyStationDto.CityId;
+            existingStation.CompanyId = companyStationDto.CompanyId; // CompanyId is required here
+
+            return existingStation;
         }
     }
 }
