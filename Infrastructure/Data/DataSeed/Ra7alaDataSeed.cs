@@ -35,38 +35,44 @@ namespace Infrastructure.Data.DataSeed
             _logger = logger;
         }
 
-        public async Task SeedAsync()
-        {
-            try
-            {
-                _logger.LogInformation("Starting database seeding process...");
+      public async Task SeedAsync()
+{
+    try
+    {
+        _logger.LogInformation("Starting database seeding process...");
 
-                // Get passwords from configuration
-                var seedPasswords = _configuration.GetSection("SeedUserPasswords");
-                var ownerPassword = seedPasswords["Owner"] ?? "Owner123!";
-                var superAdminPassword = seedPasswords["SuperAdmin"] ?? "SuperAdmin123!";
-                var adminPassword = seedPasswords["Admin"] ?? "Admin123!";
-                var driverPassword = seedPasswords["Driver"] ?? "Driver123!";
-                var passengerPassword = seedPasswords["Passenger"] ?? "Passenger123!";
+        // Get passwords from configuration
+        var seedPasswords = _configuration.GetSection("SeedUserPasswords");
+        var ownerPassword = seedPasswords["Owner"] ?? "Owner123!";
+        var superAdminPassword = seedPasswords["SuperAdmin"] ?? "SuperAdmin123!";
+        var adminPassword = seedPasswords["Admin"] ?? "Admin123!";
+        var driverPassword = seedPasswords["Driver"] ?? "Driver123!";
+        var passengerPassword = seedPasswords["Passenger"] ?? "Passenger123!";
 
-                // Seed data in sequence
-                await SeedRolesAsync();
-                await SeedOwnerAsync(ownerPassword);
-                await SeedCompaniesWithSuperAdminsAsync(superAdminPassword);
-                await SeedAdminsAsync(adminPassword);
-                await SeedDriversAsync(driverPassword);
-                await SeedPassengersAsync(passengerPassword);
-                await SeedCitiesAsync();
-                await SeedStationsAsync();
+        // Seed data in sequence
+        await SeedRolesAsync();
+        await SeedOwnerAsync(ownerPassword);
+        await SeedCompaniesWithSuperAdminsAsync(superAdminPassword);
+        await SeedAdminsAsync(adminPassword);
+        await SeedDriversAsync(driverPassword);
+        await SeedPassengersAsync(passengerPassword);
+        await SeedCitiesAsync();
+        await SeedStationsAsync();
+        
+        // Add new seeding methods
+        await SeedBusesAsync();
+        await SeedRoutesAsync();
+        await SeedTripsAsync();
+        //await SeedBookingsAndTicketsAsync();
 
-                _logger.LogInformation("Database seeding completed successfully!");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "An error occurred during database seeding process");
-                throw;
-            }
-        }
+        _logger.LogInformation("Database seeding completed successfully!");
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "An error occurred during database seeding process");
+        throw;
+    }
+}
 
         private async Task SeedRolesAsync()
         {
@@ -747,6 +753,223 @@ namespace Infrastructure.Data.DataSeed
             public decimal Longitude { get; set; }
             public int CityId { get; set; }
             public int? CompanyId { get; set; }
-        }        
+        }    
+        //new dataseed
+        //dataseed methods
+        private async Task SeedBusesAsync()
+{
+    _logger.LogInformation("Seeding buses...");
+    
+    if (!await _context.Buses.AnyAsync())
+    {
+        var companies = await _context.Companies.ToListAsync();
+        
+        var buses = new List<Bus>();
+        foreach (var company in companies)
+        {
+            // Add 3 buses per company
+            for (int i = 1; i <= 3; i++)
+            {
+                buses.Add(new Bus
+                {
+                    RegistrationNumber = $"{company.Name.Substring(0, 3).ToUpper()}-{i:D3}",
+                    Capacity = 45 + (i % 3) * 5, // Varies between 45, 50, 55
+                    Model = $"Coach {2020 + i}",
+                    YearOfManufacture = 2020 + i,
+                    IsActive = true,
+                    CompanyId = company.Id,
+                    AmenityDescription = "WiFi, AC, USB Charging, Comfortable Seats"
+                });
+            }
+        }
+
+        await _context.Buses.AddRangeAsync(buses);
+        await _context.SaveChangesAsync();
+        _logger.LogInformation("Added {Count} buses", buses.Count);
+    }
+}
+
+private async Task SeedRoutesAsync()
+{
+    _logger.LogInformation("Seeding routes...");
+    
+    if (!await _context.Routes.AnyAsync())
+    {
+        var companies = await _context.Companies.ToListAsync();
+        var cities = await _context.Cities.ToListAsync();
+        
+        var routes = new List<Route>();
+        foreach (var company in companies)
+        {
+            // Create routes between major cities for each company
+            for (int i = 0; i < cities.Count - 1; i++)
+            {
+                routes.Add(new Route
+                {
+                    Name = $"{cities[i].Name} - {cities[i + 1].Name}",
+                    StartCityId = cities[i].Id,
+                    EndCityId = cities[i + 1].Id,
+                    Distance = 100 + (i * 50), // Random distance
+                    EstimatedDuration = 120 + (i * 30), // Duration in minutes
+                    CompanyId = company.Id,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow.AddMonths(-1)
+                });
+            }
+        }
+
+        await _context.Routes.AddRangeAsync(routes);
+        await _context.SaveChangesAsync();
+        _logger.LogInformation("Added {Count} routes", routes.Count);
+    }
+}
+
+private async Task SeedTripsAsync()
+{
+    _logger.LogInformation("Seeding trips...");
+    
+    if (!await _context.Trips.AnyAsync())
+    {
+        var routes = await _context.Routes
+            .Include(r => r.Company)
+            .ToListAsync();
+            
+        var drivers = await _context.Drivers.ToListAsync();
+        var buses = await _context.Buses.ToListAsync();
+        
+        var trips = new List<Trip>();
+        var random = new Random();
+        
+        foreach (var route in routes)
+        {
+            // Create 3 trips per route
+            for (int i = 0; i < 3; i++)
+            {
+                var departureTime = DateTime.UtcNow.AddDays(i + 1).Date
+                    .AddHours(8 + (i * 4)); // Trips at 8AM, 12PM, 4PM
+                
+                var driver = drivers
+                    .FirstOrDefault(d => d.CompanyId == route.CompanyId);
+                    
+                var bus = buses
+                    .FirstOrDefault(b => b.CompanyId == route.CompanyId && b.IsActive);
+                
+                if (driver != null && bus != null)
+                {
+                    trips.Add(new Trip
+                    {
+                        RouteId = route.Id,
+                        DepartureTime = departureTime,
+                        ArrivalTime = departureTime.AddMinutes(route.EstimatedDuration),
+                        DriverId = driver.Id,
+                        BusId = bus.Id,
+                        CompanyId = route.CompanyId,
+                        IsCompleted = false,
+                        AvailableSeats = bus.Capacity,
+                        Price = 100 + (route.Distance * 0.5M) // Base price + distance factor
+                    });
+                }
+            }
+        }
+
+        await _context.Trips.AddRangeAsync(trips);
+        await _context.SaveChangesAsync();
+        _logger.LogInformation("Added {Count} trips", trips.Count);
+    }
+}
+
+// private async Task SeedBookingsAndTicketsAsync()
+// {
+//     _logger.LogInformation("Seeding bookings and tickets...");
+    
+//     if (!await _context.Bookings.AnyAsync())
+//     {
+//         var passengers = await _context.Passengers.ToListAsync();
+//         var trips = await _context.Trips
+//             .Include(t => t.Bus)
+//             .ToListAsync();
+            
+//         var bookings = new List<Booking>();
+//         var tickets = new List<Ticket>();
+//         var random = new Random();
+        
+//         foreach (var passenger in passengers)
+//         {
+//             // Create 2 bookings per passenger
+//             for (int i = 0; i < 2; i++)
+//             {
+//                 var trip = trips[random.Next(trips.Count)];
+//                 var numberOfTickets = random.Next(1, 4); // 1-3 tickets per booking
+                
+//                 var booking = new Booking
+//                 {
+//                     PassengerId = passenger.Id,
+//                     TripId = trip.Id,
+//                     BookingDate = DateTime.UtcNow.AddDays(-random.Next(1, 30)),
+//                     Status = BookingStatus.Confirmed,
+//                     TotalPrice = trip.Price * numberOfTickets
+//                 };
+                
+//                 bookings.Add(booking);
+                
+//                 // Create tickets for the booking
+//                 for (int j = 0; j < numberOfTickets; j++)
+//                 {
+//                     tickets.Add(new Ticket
+//                     {
+//                         TripId = trip.Id,
+//                         PassengerId = passenger.Id,
+//                         BookingId = booking.Id,
+//                         SeatNumber = j + 1,
+//                         Price = trip.Price,
+//                         PurchaseDate = booking.BookingDate,
+//                         IsUsed = false
+//                     });
+//                 }
+//             }
+//         }
+
+//         await _context.Bookings.AddRangeAsync(bookings);
+//         await _context.Tickets.AddRangeAsync(tickets);
+//         await _context.SaveChangesAsync();
+        
+//         _logger.LogInformation("Added {BookingCount} bookings and {TicketCount} tickets", 
+//             bookings.Count, tickets.Count);
+//     }
+// }
+
+        // Add these DTOs at the bottom of the Ra7alaDataSeed class
+private class BusSeedDto
+{
+    public string RegistrationNumber { get; set; } = string.Empty;
+    public int Capacity { get; set; }
+    public string Model { get; set; } = string.Empty;
+    public int YearOfManufacture { get; set; }
+    public bool IsActive { get; set; }
+    public int CompanyId { get; set; }
+    public string AmenityDescription { get; set; } = string.Empty;
+}
+
+private class RouteSeedDto
+{
+    public string Name { get; set; } = string.Empty;
+    public int StartCityId { get; set; }
+    public int EndCityId { get; set; }
+    public int Distance { get; set; }
+    public int EstimatedDuration { get; set; }
+    public int CompanyId { get; set; }
+}
+
+private class TripSeedDto
+{
+    public int RouteId { get; set; }
+    public DateTime DepartureTime { get; set; }
+    public DateTime ArrivalTime { get; set; }
+    public string DriverId { get; set; } = string.Empty;
+    public int BusId { get; set; }
+    public int CompanyId { get; set; }
+    public decimal Price { get; set; }
+    public int AvailableSeats { get; set; }
+}    
     }
 }
