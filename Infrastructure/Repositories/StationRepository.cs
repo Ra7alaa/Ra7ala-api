@@ -89,6 +89,36 @@ namespace Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        // الحصول على محطات النظام فقط (CompanyId = null)
+        public async Task<IEnumerable<Station>> GetSystemStationsAsync()
+        {
+            return await _context.Stations
+                .Include(s => s.City)
+                .Include(s => s.Company)
+                .Where(s => s.CompanyId == null && !s.IsDeleted)
+                .ToListAsync();
+        }
+
+        // تعديل الدالة لتأخذ معرف الشركة كمعامل
+        public async Task<IEnumerable<Station>> GetCompanyStationsAsync(int companyId)
+        {
+            return await _context.Stations
+                .Include(s => s.City)
+                .Include(s => s.Company)
+                .Where(s => s.CompanyId == companyId && !s.IsDeleted)
+                .ToListAsync();
+        }
+
+        // دالة جديدة للحصول على محطات النظام مع محطات شركة محددة
+        public async Task<IEnumerable<Station>> GetSystemAndCompanyStationsAsync(int companyId)
+        {
+            return await _context.Stations
+                .Include(s => s.City)
+                .Include(s => s.Company)
+                .Where(s => (s.CompanyId == null || s.CompanyId == companyId) && !s.IsDeleted)
+                .ToListAsync();
+        }
+
         public new async Task<Station?> GetByIdAsync(int id)
         {
             return await _context.Stations

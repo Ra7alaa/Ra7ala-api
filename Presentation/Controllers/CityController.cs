@@ -1,6 +1,7 @@
 ﻿using Application.DTOs.City;
 using Application.Services.City;
 using Application.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -36,6 +37,7 @@ namespace Presentation.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Owner")]
         public async Task<IActionResult> AddCity([FromBody] CityAddUpdateDto cityDto)
         {
             var result = await _cityService.AddCityAsync(cityDto);
@@ -43,6 +45,7 @@ namespace Presentation.Controllers
         }
 
         [HttpPost("AddCities")]
+        [Authorize(Roles = "Owner")]
         public async Task<IActionResult> AddCities([FromBody] List<CityAddUpdateDto> cities)
         {
             var result = await _cityService.AddCitiesAsync(cities);
@@ -50,6 +53,7 @@ namespace Presentation.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Owner")]
         public async Task<IActionResult> UpdateCity(int id, [FromBody] CityAddUpdateDto cityDto)
         {
             var result = await _cityService.UpdateCityAsync(id, cityDto);
@@ -58,11 +62,12 @@ namespace Presentation.Controllers
             {
                 return NotFound();
             }
-            
+
             return Ok(result);
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Owner")]
         public async Task<IActionResult> DeleteCity(int id)
         {
             var result = await _cityService.DeleteCityAsync(id);
@@ -71,7 +76,7 @@ namespace Presentation.Controllers
             {
                 return NotFound();
             }
-            
+
             return NoContent();
         }
 

@@ -7,8 +7,7 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs.Station
 {
-    // System Stations (without company assignment)
-    public class StationAddUpdateDto
+    public class CompanyStationAddUpdateDto
     {
         [Required]
         [StringLength(50, MinimumLength = 2)]
@@ -23,6 +22,7 @@ namespace Application.DTOs.Station
         [Required]
         public int CityId { get; set; }
         
-        // No CompanyId for system stations
+        [Required]
+        public int CompanyId { get; set; }
     }
 }
