@@ -39,13 +39,16 @@ namespace Presentation.Controllers
 
         // Add new functions to distinguish between system stations and company stations
         [HttpGet("system")]
+        [Authorize(Roles = "Owner")]
         public async Task<IEnumerable<StationDto>> GetSystemStations() => await _stationService.GetSystemStations();
-        
+
         [HttpGet("company/{companyId}")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         public async Task<IEnumerable<StationDto>> GetCompanyStations(int companyId) => await _stationService.GetCompanyStations(companyId);
 
         // New endpoint to get system stations and specified company stations
         [HttpGet("system-and-company/{companyId}")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         public async Task<IEnumerable<StationDto>> GetSystemAndCompanyStations(int companyId) => await _stationService.GetSystemAndCompanyStations(companyId);
 
         // [HttpGet("GetNearbyStations/{latitude}/{longitude}/{radiusInKm}")]
