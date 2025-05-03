@@ -10,9 +10,10 @@ namespace Presentation.Extensions
     {
         public static IServiceCollection AddChatBotServices(this IServiceCollection services, IConfiguration config)
         {
-            services.Configure<OpenAISettings>(config.GetSection("OpenAI"));
+            // Register Gemini settings from configuration
+            services.Configure<GeminiSettings>(config.GetSection("Gemini"));
             
-            // Register HttpClient for OpenAI
+            // Register HttpClient with timeout for Gemini service
             services.AddHttpClient<IChatBotService, ChatBotService>(client =>
             {
                 client.Timeout = TimeSpan.FromSeconds(30);

@@ -21,20 +21,20 @@ namespace Presentation.Controllers
         }
 
         /// <summary>
-        /// Processes a chat message from the user and returns a response from the AI chatbot.
+        /// Process a user message and get a response from the AI chatbot.
         /// </summary>
-        /// <param name="request">The chat request from the user.</param>
-        /// <returns>A response from the AI chatbot.</returns>
+        /// <param name="request">The chat request containing the user message</param>
+        /// <returns>A response from the AI chatbot</returns>
         [HttpPost("message")]
+        [AllowAnonymous]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ApiResponse))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ApiValidationErrorResponse))]
-        [AllowAnonymous]
-        public async Task<IActionResult> ProcessChatMessage([FromBody] ChatBotRequestDto request)
+        public async Task<IActionResult> ProcessMessage([FromBody] ChatBotRequestDto request)
         {
-            var result = await _chatBotService.ProcessChatMessageAsync(request);
+            var result = await _chatBotService.ProcessMessageAsync(request);
             if (result.IsSuccess)
             {
-                var response = new ApiResponse(StatusCodes.Status200OK, "Chat message processed successfully")
+                var response = new ApiResponse(StatusCodes.Status200OK, "Message processed successfully")
                 {
                     Data = result.Data
                 };

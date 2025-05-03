@@ -6,6 +6,6 @@ namespace Application.Services.Interfaces
 {
     public interface IChatBotService
     {
-        Task<ServiceResult<ChatBotResponseDto>> ProcessChatMessageAsync(ChatBotRequestDto request);
+        Task<ServiceResult<ChatBotResponseDto>> ProcessMessageAsync(ChatBotRequestDto request);
     }
 }
