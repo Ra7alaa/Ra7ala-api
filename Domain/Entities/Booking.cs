@@ -1,3 +1,5 @@
+using Domain.Enums;
+
 namespace Domain.Entities
 {
     public class Booking : BaseEntity<int>
@@ -6,10 +8,10 @@ namespace Domain.Entities
         public int TripId { get; set; }
         public DateTime BookingDate { get; set; } = DateTime.UtcNow;
         public decimal TotalPrice { get; set; }
-        public string Status { get; set; } = "Pending"; 
-        
+        public BookingStatus Status { get; set; } = BookingStatus.Pending;
+
         // Navigation properties
-        public virtual Passenger? Passenger { get; set; } = null!;
+        public virtual Passenger Passenger { get; set; } = null!;
         public virtual Trip Trip { get; set; } = null!;
         public virtual ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
     }

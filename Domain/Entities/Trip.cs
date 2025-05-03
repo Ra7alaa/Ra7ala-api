@@ -4,12 +4,13 @@ namespace Domain.Entities
     {
         public int RouteId { get; set; }
         public DateTime DepartureTime { get; set; }
-        public DateTime? ArrivalTime { get; set; } 
+        public DateTime? ArrivalTime { get; set; }
         public string DriverId { get; set; } = string.Empty;
-        public int? BusId { get; set; } 
+        public int? BusId { get; set; }
         public bool IsCompleted { get; set; } = false;
         public int AvailableSeats { get; set; }
         public int CompanyId { get; set; }
+        public decimal Price { get; set; } 
 
         // Navigation properties
         public virtual Route Route { get; set; } = null!;
@@ -18,6 +19,6 @@ namespace Domain.Entities
         public virtual Company Company { get; set; } = null!;
         public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
         public virtual ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
-        public virtual ICollection<TripStation> TripStations { get; set; } = new List<TripStation>(); 
+        public virtual ICollection<TripStation> TripStations { get; set; } = new List<TripStation>();
     }
 }

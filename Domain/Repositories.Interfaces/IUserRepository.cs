@@ -5,6 +5,7 @@ namespace Domain.Repositories.Interfaces
 {
     public interface IUserRepository
     {
+        Task<AppUser?> GetByIdAsync(string userId);
         Task<bool> IsSuperAdminExistsForCompanyAsync(int companyId);
         Task<string?> GetUserIdFromClaimsPrincipalAsync(ClaimsPrincipal user);
         Task<SuperAdmin?> GetSuperAdminByUserIdAsync(string userId);

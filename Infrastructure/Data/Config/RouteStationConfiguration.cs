@@ -14,7 +14,7 @@ namespace Infrastructure.Data.Config
             builder.HasOne(rs => rs.Route)
                    .WithMany(r => r.RouteStations)
                    .HasForeignKey(rs => rs.RouteId)
-                   .OnDelete(DeleteBehavior.Cascade); 
+                   .OnDelete(DeleteBehavior.Cascade);
 
             // Configure relationship with Station
             builder.HasOne(rs => rs.Station)
@@ -24,7 +24,10 @@ namespace Infrastructure.Data.Config
 
             // Create a unique constraint for route-sequence combination
             builder.HasIndex(rs => new { rs.RouteId, rs.SequenceNumber })
-                   .IsUnique(); 
+                   .IsUnique();
+
+            // Add index for performance
+            builder.HasIndex(rs => rs.StationId);
         }
     }
 }

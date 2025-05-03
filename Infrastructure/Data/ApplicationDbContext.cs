@@ -21,6 +21,7 @@ namespace Infrastructure.Data
         public DbSet<Station> Stations { get; set; } = null!;
         public DbSet<Bus> Buses { get; set; } = null!; 
         public DbSet<Trip> Trips { get; set; } = null!; 
+        public DbSet<TripStation> TripStations { get; set; } = null!;
         public DbSet<Route> Routes { get; set; } = null!;  
         public DbSet<RouteStation> RouteStations { get; set; } = null!;
         public DbSet<CompanyFeedback> CompanyFeedbacks { get; set; } = null!;

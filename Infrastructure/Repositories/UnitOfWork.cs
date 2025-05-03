@@ -5,7 +5,6 @@ using Infrastructure.Repositories.Company;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Threading.Tasks;
-using Company = Domain.Entities.Company;
 
 namespace Infrastructure.Repositories
 {
@@ -15,16 +14,18 @@ namespace Infrastructure.Repositories
         private readonly ApplicationDbContext _context;
         private readonly UserManager<AppUser> _userManager;
         private readonly SignInManager<AppUser> _signInManager;
-        private ICompanyRepository _companyRepository;
+        private ICompanyRepository? _companyRepository; // Changed to nullable
         private ICityRepository? _citiesRepository;
         private IStationRepository? _stationsRepository;
         private IUserRepository? _userRepository;
         private IRouteRepository? _routeRepository;
+        private ITripRepository? _tripRepository;
         private IGenericRepository<RouteStation>? _routeStationsRepository;
         private IGenericRepository<SuperAdmin>? _superAdminsRepository;
         private IGenericRepository<Admin>? _adminsRepository;
         private IGenericRepository<Driver>? _driversRepository;
         private IGenericRepository<Passenger>? _passengersRepository;
+        private IGenericRepository<TripStation>? _tripStationsRepository;
 
         public UnitOfWork(
             ApplicationDbContext context,
@@ -40,7 +41,7 @@ namespace Infrastructure.Repositories
         public ICompanyRepository CompanyRepository => 
             _companyRepository ??= new CompanyRepository(_context);
         public IBusRepository Buses => 
-          _busRepository ??= new BusRepository(_context);
+            _busRepository ??= new BusRepository(_context);
 
         public ICityRepository Cities => 
             _citiesRepository ??= new CityRepository(_context);
@@ -54,6 +55,9 @@ namespace Infrastructure.Repositories
         public IRouteRepository Routes => 
             _routeRepository ??= new RouteRepository(_context);
 
+        public ITripRepository Trips => 
+            _tripRepository ??= new TripRepository(_context);
+        
         #endregion
 
         #region Generic Repositories
@@ -71,6 +75,9 @@ namespace Infrastructure.Repositories
 
         public IGenericRepository<Passenger> Passengers => 
             _passengersRepository ??= new GenericRepository<Passenger>(_context); 
+
+        public IGenericRepository<TripStation> TripStations =>
+            _tripStationsRepository ??= new GenericRepository<TripStation>(_context);    
 
         #endregion
         

@@ -159,12 +159,12 @@ namespace Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
+                    b.Property<int>("Status")
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("int");
 
                     b.Property<decimal>("TotalPrice")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("TripId")
@@ -172,7 +172,11 @@ namespace Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BookingDate");
+
                     b.HasIndex("PassengerId");
+
+                    b.HasIndex("Status");
 
                     b.HasIndex("TripId");
 
@@ -449,6 +453,8 @@ namespace Infrastructure.Data.Migrations
 
                     b.HasIndex("EndCityId");
 
+                    b.HasIndex("Name");
+
                     b.HasIndex("StartCityId");
 
                     b.ToTable("Routes");
@@ -632,6 +638,10 @@ namespace Infrastructure.Data.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<int>("RouteId")
                         .HasColumnType("int");
 
@@ -643,7 +653,11 @@ namespace Infrastructure.Data.Migrations
 
                     b.HasIndex("CompanyId");
 
+                    b.HasIndex("DepartureTime");
+
                     b.HasIndex("DriverId");
+
+                    b.HasIndex("Price");
 
                     b.HasIndex("RouteId");
 
@@ -658,7 +672,7 @@ namespace Infrastructure.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("ArrivalTime")
+                    b.Property<DateTime?>("ArrivalTime")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime>("DepartureTime")
@@ -681,12 +695,16 @@ namespace Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DepartureTime");
+
                     b.HasIndex("StationId");
+
+                    b.HasIndex("TripId");
 
                     b.HasIndex("TripId", "SequenceNumber")
                         .IsUnique();
 
-                    b.ToTable("TripStation");
+                    b.ToTable("TripStations");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

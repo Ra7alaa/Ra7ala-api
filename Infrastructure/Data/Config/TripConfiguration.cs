@@ -45,13 +45,13 @@ namespace Infrastructure.Data.Config
             builder.HasMany(t => t.Bookings)
                    .WithOne(b => b.Trip)
                    .HasForeignKey(b => b.TripId)
-                   .OnDelete(DeleteBehavior.Restrict); 
+                   .OnDelete(DeleteBehavior.Restrict);
 
             // Configure relationship with TripStations
             builder.HasMany(t => t.TripStations)
                    .WithOne(ts => ts.Trip)
                    .HasForeignKey(ts => ts.TripId)
-                   .OnDelete(DeleteBehavior.Cascade); 
+                   .OnDelete(DeleteBehavior.Cascade);
 
             // Configure properties
             builder.Property(t => t.AvailableSeats)
@@ -62,6 +62,16 @@ namespace Infrastructure.Data.Config
 
             builder.Property(t => t.IsCompleted)
                    .IsRequired();
+
+            builder.Property(t => t.Price)
+                   .IsRequired()
+                   .HasPrecision(18, 2); // Added Price configuration
+
+            // Add indexes for performance
+            builder.HasIndex(t => t.RouteId);
+            builder.HasIndex(t => t.CompanyId);
+            builder.HasIndex(t => t.DepartureTime);
+            builder.HasIndex(t => t.Price); // Added index for Price
         }
     }
 }

@@ -25,6 +25,11 @@ namespace Infrastructure.Repositories
             _signInManager = signInManager;
         }
 
+        public async Task<AppUser?> GetByIdAsync(string userId)
+        {
+            return await _userManager.FindByIdAsync(userId);
+        }
+        
         public async Task<bool> IsSuperAdminExistsForCompanyAsync(int companyId)
         {
             return await _context.Set<SuperAdmin>()
