@@ -4,19 +4,16 @@ using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace Infrastructure.Data.Migrations
+namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250503104411_FixMigration-addDataSeed")]
-    partial class FixMigrationaddDataSeed
+    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -155,15 +152,30 @@ namespace Infrastructure.Data.Migrations
                     b.Property<DateTime>("BookingDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("EndStationId")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
+
+                    b.Property<bool>("IsPaid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<int>("NumberOfTickets")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
 
                     b.Property<string>("PassengerId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<int>("StartStationId")
+                        .HasColumnType("int");
+
                     b.Property<int>("Status")
-                        .HasMaxLength(50)
                         .HasColumnType("int");
 
                     b.Property<decimal>("TotalPrice")
@@ -177,7 +189,11 @@ namespace Infrastructure.Data.Migrations
 
                     b.HasIndex("BookingDate");
 
+                    b.HasIndex("EndStationId");
+
                     b.HasIndex("PassengerId");
+
+                    b.HasIndex("StartStationId");
 
                     b.HasIndex("Status");
 
@@ -317,6 +333,9 @@ namespace Infrastructure.Data.Migrations
 
                     b.Property<string>("SuperAdminPhone")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TaxDocumentUrl")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("TotalRatings")
@@ -587,6 +606,11 @@ namespace Infrastructure.Data.Migrations
                     b.Property<int?>("SeatNumber")
                         .HasColumnType("int");
 
+                    b.Property<string>("TicketCode")
+                        .IsRequired()
+                        .HasMaxLength(4)
+                        .HasColumnType("nvarchar(4)");
+
                     b.Property<int>("TripId")
                         .HasColumnType("int");
 
@@ -597,6 +621,8 @@ namespace Infrastructure.Data.Migrations
                     b.HasIndex("PassengerId");
 
                     b.HasIndex("PassengerId1");
+
+                    b.HasIndex("TicketCode");
 
                     b.HasIndex("TripId", "SeatNumber")
                         .IsUnique()
@@ -872,9 +898,21 @@ namespace Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Domain.Entities.Booking", b =>
                 {
+                    b.HasOne("Domain.Entities.Station", "EndStation")
+                        .WithMany()
+                        .HasForeignKey("EndStationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.Passenger", "Passenger")
                         .WithMany("Bookings")
                         .HasForeignKey("PassengerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Station", "StartStation")
+                        .WithMany()
+                        .HasForeignKey("StartStationId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -884,7 +922,11 @@ namespace Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.Navigation("EndStation");
+
                     b.Navigation("Passenger");
+
+                    b.Navigation("StartStation");
 
                     b.Navigation("Trip");
                 });

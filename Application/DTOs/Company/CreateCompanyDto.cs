@@ -34,6 +34,10 @@ namespace Application.DTOs.Company
         //[Required(ErrorMessage = "Country is required")]
         public IFormFile? Logo { get; set; }
 
+        [Required(ErrorMessage = "Tax document is required")]
+        public IFormFile? TaxDocument { get; set; }
+
+
         // Super Admin details
         [Required(ErrorMessage = "Super Admin name is required")]
         [StringLength(100, ErrorMessage = "Name cannot exceed 100 characters")]

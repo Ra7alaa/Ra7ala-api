@@ -13,6 +13,7 @@ namespace Application.DTOs.Company
         public string Address { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public string LogoUrl { get; set; } = string.Empty;
+        public string? TaxDocumentUrl { get; set; } 
         public double AverageRating { get; set; }
         public int TotalRatings { get; set; }
         public DateTime CreatedDate { get; set; }

@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Infrastructure.Data.Migrations
+namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class FirstMigration : Migration
+    public partial class updateCompany : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -85,6 +85,7 @@ namespace Infrastructure.Data.Migrations
                     Address = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     LogoUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    TaxDocumentUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     SuperAdminName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     SuperAdminEmail = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     SuperAdminPhone = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -526,9 +527,13 @@ namespace Infrastructure.Data.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     PassengerId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     TripId = table.Column<int>(type: "int", nullable: false),
+                    StartStationId = table.Column<int>(type: "int", nullable: false),
+                    EndStationId = table.Column<int>(type: "int", nullable: false),
                     BookingDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     TotalPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    Status = table.Column<int>(type: "int", maxLength: 50, nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    IsPaid = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    NumberOfTickets = table.Column<int>(type: "int", nullable: false, defaultValue: 1),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -538,6 +543,18 @@ namespace Infrastructure.Data.Migrations
                         name: "FK_Bookings_Passengers_PassengerId",
                         column: x => x.PassengerId,
                         principalTable: "Passengers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Bookings_Stations_EndStationId",
+                        column: x => x.EndStationId,
+                        principalTable: "Stations",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Bookings_Stations_StartStationId",
+                        column: x => x.StartStationId,
+                        principalTable: "Stations",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
@@ -592,6 +609,7 @@ namespace Infrastructure.Data.Migrations
                     Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     PurchaseDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsUsed = table.Column<bool>(type: "bit", nullable: false),
+                    TicketCode = table.Column<string>(type: "nvarchar(4)", maxLength: 4, nullable: false),
                     PassengerId1 = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
@@ -678,9 +696,19 @@ namespace Infrastructure.Data.Migrations
                 column: "BookingDate");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Bookings_EndStationId",
+                table: "Bookings",
+                column: "EndStationId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Bookings_PassengerId",
                 table: "Bookings",
                 column: "PassengerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Bookings_StartStationId",
+                table: "Bookings",
+                column: "StartStationId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Bookings_Status",
@@ -773,6 +801,11 @@ namespace Infrastructure.Data.Migrations
                 name: "IX_Tickets_PassengerId1",
                 table: "Tickets",
                 column: "PassengerId1");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Tickets_TicketCode",
+                table: "Tickets",
+                column: "TicketCode");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Tickets_TripId_SeatNumber",
@@ -881,10 +914,10 @@ namespace Infrastructure.Data.Migrations
                 name: "Bookings");
 
             migrationBuilder.DropTable(
-                name: "Stations");
+                name: "Passengers");
 
             migrationBuilder.DropTable(
-                name: "Passengers");
+                name: "Stations");
 
             migrationBuilder.DropTable(
                 name: "Trips");

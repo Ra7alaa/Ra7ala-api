@@ -35,7 +35,7 @@ namespace Application.Services
             _logger = logger;
         }
 
-        // Creates a new company using the provided data.
+        // Creates a new company.
         public async Task<CompanyDto> CreateCompanyAsync(CreateCompanyDto createDto)
         {
             try
@@ -84,6 +84,10 @@ namespace Application.Services
                 if (createDto.Logo != null)
                 {
                     company.LogoUrl = await UploadLogoAsync(createDto.Logo);
+                }
+                if (createDto.TaxDocument != null)
+                {
+                    company.TaxDocumentUrl = await UploadTaxDocumentAsync(createDto.TaxDocument);
                 }
 
                 await _unitOfWork.CompanyRepository.AddAsync(company);
@@ -480,6 +484,49 @@ namespace Application.Services
             }
         }
 
-       
+        private async Task<string> UploadTaxDocumentAsync(IFormFile document)
+        {
+        try
+        {
+            if (document == null || document.Length == 0)
+                throw new ArgumentException("No file was uploaded");
+
+            // Validate file type
+            var allowedTypes = new[] { ".pdf" };
+            var fileExtension = Path.GetExtension(document.FileName).ToLowerInvariant();
+            if (!allowedTypes.Contains(fileExtension))
+                throw new ArgumentException("Invalid file type. Only PDF files are allowed.");
+
+            // Validate file size (e.g., max 5MB)
+            if (document.Length > 5 * 1024 * 1024)
+                throw new ArgumentException("File size exceeds maximum limit of 5MB");
+
+            // Create unique filename
+            var fileName = $"{Guid.NewGuid()}{fileExtension}";
+
+            // Define upload path
+            var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "documents");
+
+            // Create directory if it doesn't exist
+            if (!Directory.Exists(uploadPath))
+                Directory.CreateDirectory(uploadPath);
+
+            // Combine path and filename
+            var filePath = Path.Combine(uploadPath, fileName);
+
+            // Save file
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await document.CopyToAsync(fileStream);
+            }
+            
+            return $"/uploads/documents/{fileName}";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error uploading tax document");
+            throw;
+        }
+        }
     }
 }

@@ -29,6 +29,8 @@ namespace Domain.Entities
         public string Description { get; set; } = string.Empty;
 
         public string LogoUrl { get; set; } = string.Empty;
+        
+        public string? TaxDocumentUrl { get; set; }
 
         // Super Admin Data
         public string SuperAdminName { get; set; } = string.Empty;
