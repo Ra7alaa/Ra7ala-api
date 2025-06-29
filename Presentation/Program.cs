@@ -60,6 +60,9 @@ namespace Presentation
             // Configure ChatBot services
             builder.Services.AddChatBotServices(builder.Configuration);
 
+            // Configure Payment services
+            builder.Services.AddPaymentServices(builder.Configuration);
+
             // Configure Data Seed services
             builder.Services.AddDataSeedServices();
 

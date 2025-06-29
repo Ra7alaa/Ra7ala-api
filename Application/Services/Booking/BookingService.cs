@@ -1,4 +1,5 @@
 using Application.DTOs.Booking;
+using Application.DTOs.Payment;
 using Application.DTOs.Ticket;
 using Application.Models;
 using Application.Services.Interfaces;
@@ -16,12 +17,17 @@ namespace Application.Services.Booking
     public class BookingService : IBookingService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IPaymentService _paymentService;
         private readonly ILogger<BookingService> _logger;
         private readonly Random _random;
 
-        public BookingService(IUnitOfWork unitOfWork, ILogger<BookingService> logger)
+        public BookingService(
+            IUnitOfWork unitOfWork, 
+            IPaymentService paymentService,
+            ILogger<BookingService> logger)
         {
             _unitOfWork = unitOfWork;
+            _paymentService = paymentService;
             _logger = logger;
             _random = new Random();
         }
@@ -148,11 +154,14 @@ namespace Application.Services.Booking
             }
         }
 
-        // Process payment for a booking
+        // Process payment for a booking using Stripe
         public async Task<ServiceResult<BookingConfirmationDto>> ProcessPaymentAsync(ProcessPaymentDto paymentDto, string passengerId)
         {
             try
             {
+                _logger.LogInformation("Processing payment for booking {BookingId} by passenger {PassengerId}", 
+                    paymentDto.BookingId, passengerId);
+
                 // 1. Get the booking
                 var booking = await _unitOfWork.Bookings.GetBookingWithDetailsAsync(paymentDto.BookingId);
                 if (booking == null)
@@ -170,52 +179,74 @@ namespace Application.Services.Booking
                 if (booking.Status != BookingStatus.Pending)
                     return ServiceResult<BookingConfirmationDto>.Failure($"Booking status is {booking.Status}, cannot process payment");
 
-                // 5. Process payment (in a real application, you would integrate with a payment gateway)
-                // Simulating payment processing...
-                // Assume payment is successful
-
-                // 6. Update booking status
-                booking.Status = BookingStatus.Confirmed;
-                booking.IsPaid = true;
-                _unitOfWork.Bookings.Update(booking);
-
-                // 7. Generate tickets
-                var tickets = new List<Ticket>();
-                for (int i = 0; i < booking.NumberOfTickets; i++)
+                // 5. Create payment intent with Stripe
+                var createPaymentDto = new CreatePaymentIntentDto
                 {
-                    tickets.Add(new Ticket
-                    {
-                        TripId = booking.TripId,
-                        BookingId = booking.Id,
-                        PassengerId = booking.PassengerId,
-                        Price = booking.TotalPrice / booking.NumberOfTickets, // Distribute price evenly
-                        PurchaseDate = DateTime.UtcNow,
-                        IsUsed = false,
-                        TicketCode = GenerateRandomTicketCode()
-                    });
+                    BookingId = paymentDto.BookingId,
+                    Amount = booking.TotalPrice,
+                    Currency = "usd",
+                    Description = $"Ra7ala Trip Booking #{paymentDto.BookingId}",
+                    CustomerEmail = paymentDto.CustomerEmail
+                };
+
+                var paymentResult = await _paymentService.CreatePaymentIntentAsync(createPaymentDto);
+                if (!paymentResult.IsSuccess)
+                {
+                    _logger.LogError("Failed to create payment intent for booking {BookingId}: {Errors}", 
+                        paymentDto.BookingId, string.Join(", ", paymentResult.Errors));
+                    return ServiceResult<BookingConfirmationDto>.Failure("Failed to create payment: " + string.Join(", ", paymentResult.Errors));
                 }
 
-                // 8. Save tickets
-                await _unitOfWork.Tickets.AddRangeAsync(tickets);
-                await _unitOfWork.SaveChangesAsync();
+                string? paymentIntentId = paymentResult.Data?.PaymentIntentId;
+                var tickets = new List<TicketDto>();
+                bool paymentSucceeded = false;
 
-                // 9. Prepare response
-                var ticketDtos = tickets.Select(MapTicketToDto).ToList();
+                // 6. If payment method token is provided, confirm the payment immediately
+                if (!string.IsNullOrEmpty(paymentDto.PaymentMethodToken))
+                {
+                    var confirmationDto = new PaymentConfirmationDto
+                    {
+                        PaymentIntentId = paymentIntentId!,
+                        BookingId = paymentDto.BookingId
+                    };
 
+                    var confirmationResult = await _paymentService.ConfirmPaymentAsync(confirmationDto);
+                    if (confirmationResult.IsSuccess && confirmationResult.Data?.IsSuccess == true)
+                    {
+                        // Payment succeeded - get generated tickets
+                        tickets = await GetTicketsByBookingIdAsync(paymentDto.BookingId);
+                        paymentSucceeded = true;
+                        
+                        _logger.LogInformation("Payment processed successfully for booking {BookingId}", paymentDto.BookingId);
+                    }
+                    else
+                    {
+                        return ServiceResult<BookingConfirmationDto>.Failure(
+                            confirmationResult.Data?.ErrorMessage ?? "Payment confirmation failed");
+                    }
+                }
+
+                // 7. Create confirmation response
                 var confirmation = new BookingConfirmationDto
                 {
                     BookingId = booking.Id,
-                    Success = true,
-                    Message = "Payment processed successfully. Tickets have been generated.",
-                    Tickets = ticketDtos
+                    Success = paymentSucceeded,
+                    TotalPrice = booking.TotalPrice,
+                    PaymentStatus = paymentSucceeded ? "succeeded" : "requires_payment_method",
+                    PaymentIntentId = paymentIntentId,
+                    ClientSecret = paymentResult.Data?.ClientSecret,
+                    Tickets = tickets,
+                    Message = paymentSucceeded 
+                        ? "Payment processed successfully. Your tickets have been generated." 
+                        : "Payment intent created. Please complete payment using the client secret."
                 };
 
                 return ServiceResult<BookingConfirmationDto>.Success(confirmation);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error processing payment for booking {paymentDto.BookingId}");
-                return ServiceResult<BookingConfirmationDto>.Failure($"Error processing payment: {ex.Message}");
+                _logger.LogError(ex, "Error processing payment for booking {BookingId}", paymentDto.BookingId);
+                return ServiceResult<BookingConfirmationDto>.Failure("An error occurred while processing payment");
             }
         }
 
@@ -312,6 +343,13 @@ namespace Application.Services.Booking
                 NumberOfTickets = booking.NumberOfTickets,
                 Tickets = booking.Tickets?.Select(MapTicketToDto).ToList() ?? new List<TicketDto>()
             };
+        }
+
+        // Helper method to get tickets by booking ID
+        private async Task<List<TicketDto>> GetTicketsByBookingIdAsync(int bookingId)
+        {
+            var booking = await _unitOfWork.Bookings.GetBookingWithDetailsAsync(bookingId);
+            return booking?.Tickets?.Select(MapTicketToDto).ToList() ?? new List<TicketDto>();
         }
 
         private TicketDto MapTicketToDto(Ticket ticket)
