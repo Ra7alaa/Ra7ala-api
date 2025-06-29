@@ -62,7 +62,12 @@ namespace Application.DTOs.Booking
         [Required(ErrorMessage = "Payment method is required")]
         public string PaymentMethod { get; set; } = "CreditCard";
         
-        // Additional payment info would be added here in a real implementation
+        // Stripe payment method token (optional - if provided, payment will be processed immediately)
+        public string? PaymentMethodToken { get; set; }
+        
+        // Additional customer information for Stripe
+        public string? CustomerEmail { get; set; }
+        public string? CustomerName { get; set; }
     }
     
     // DTO for confirming booking after payment
@@ -71,6 +76,10 @@ namespace Application.DTOs.Booking
         public int BookingId { get; set; }
         public bool Success { get; set; }
         public string Message { get; set; } = string.Empty;
+        public decimal TotalPrice { get; set; }
+        public string PaymentStatus { get; set; } = string.Empty;
+        public string? PaymentIntentId { get; set; }
+        public string? ClientSecret { get; set; }
         public List<TicketDto> Tickets { get; set; } = new List<TicketDto>();
     }
 }

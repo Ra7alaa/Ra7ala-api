@@ -8,10 +8,17 @@ namespace Presentation.Errors
         
         public object? Data { get; set; }
 
-		public ApiResponse(int statusCode, string? message=null)
+		public ApiResponse(int statusCode, string? message = null)
 		{
 			StatusCode = statusCode;
 			Message = message ?? GetDefaultMessageForStatusCode(statusCode);
+		}
+
+		public ApiResponse(int statusCode, string? message, object? data)
+		{
+			StatusCode = statusCode;
+			Message = message ?? GetDefaultMessageForStatusCode(statusCode);
+			Data = data;
 		}
 
 		private string? GetDefaultMessageForStatusCode(int statusCode)
