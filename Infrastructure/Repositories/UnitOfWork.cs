@@ -1,3 +1,4 @@
+﻿using Microsoft.EntityFrameworkCore.Storage;
 using Domain.Entities;
 using Domain.Repositories.Interfaces;
 using Infrastructure.Data;
@@ -92,6 +93,11 @@ namespace Infrastructure.Repositories
         public async Task<int> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync();
+        }
+
+        public async Task<IDbContextTransaction> BeginTransactionAsync()
+        {
+            return await _context.Database.BeginTransactionAsync();
         }
     }
 }

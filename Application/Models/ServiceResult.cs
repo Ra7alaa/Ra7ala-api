@@ -19,7 +19,7 @@ namespace Application.Models
             }
         }
 
-        public static ServiceResult<T> Success(T data)
+        public static ServiceResult<T> Success(T? data)
         {
             return new ServiceResult<T>(true, data, null);
         }

@@ -46,27 +46,27 @@ namespace Infrastructure.Repositories
         {
             return await _context.Set<SuperAdmin>()
                 .Include(sa => sa.Company)
-                .FirstOrDefaultAsync(sa => sa.Id == userId);
+                .FirstOrDefaultAsync(sa => sa.Id == userId && !sa.IsDeleted && sa.Company.Status == "Approved");
         }
 
         public async Task<Admin?> GetAdminByUserIdAsync(string userId)
         {
             return await _context.Set<Admin>()
                 .Include(a => a.Company)
-                .FirstOrDefaultAsync(a => a.Id == userId);
+                .FirstOrDefaultAsync(a => a.Id == userId && !a.IsDeleted && a.Company.Status == "Approved");
         }
 
         public async Task<Driver?> GetDriverByUserIdAsync(string userId)
         {
             return await _context.Set<Driver>()
                 .Include(d => d.Company)
-                .FirstOrDefaultAsync(d => d.Id == userId);
+                .FirstOrDefaultAsync(d => d.Id == userId && !d.IsDeleted && d.Company.Status == "Approved");
         }
 
         public async Task<Passenger?> GetPassengerByUserIdAsync(string userId)
         {
             return await _context.Set<Passenger>()
-                .FirstOrDefaultAsync(p => p.Id == userId);
+                .FirstOrDefaultAsync(p => p.Id == userId && !p.IsDeleted);
         }
 
         public async Task<AppUser?> GetUserByEmailAsync(string email)
@@ -90,7 +90,7 @@ namespace Infrastructure.Repositories
             return await _context.Set<Admin>()
                 .Include(a => a.AppUser)
                 .Include(a => a.Company)
-                .Where(a => a.CompanyId == companyId)
+                .Where(a => a.CompanyId == companyId && !a.IsDeleted && a.Company.Status == "Approved")
                 .ToListAsync();
         }
 
@@ -99,7 +99,7 @@ namespace Infrastructure.Repositories
             return await _context.Set<Driver>()
                 .Include(d => d.AppUser)
                 .Include(d => d.Company)
-                .Where(d => d.CompanyId == companyId)
+                .Where(d => d.CompanyId == companyId && !d.IsDeleted && d.Company.Status == "Approved")
                 .ToListAsync();
         }
 

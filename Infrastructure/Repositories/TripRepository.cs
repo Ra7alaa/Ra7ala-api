@@ -16,7 +16,7 @@ namespace Infrastructure.Repositories
         {
         }
 
-        public async Task<Trip> GetTripByIdWithDetailsAsync(int tripId)
+        public async Task<Trip?> GetTripByIdWithDetailsAsync(int tripId)
         {
             return await _context.Trips
                 .Include(t => t.Route)
@@ -27,7 +27,7 @@ namespace Infrastructure.Repositories
                 .Include(t => t.TripStations)
                     .ThenInclude(ts => ts.Station)
                         .ThenInclude(s => s.City)
-                .FirstOrDefaultAsync(t => t.Id == tripId && !t.IsDeleted);
+                .FirstOrDefaultAsync(t => t.Id == tripId && !t.IsDeleted && t.Company.Status == "Approved");
         }
 
         public async Task<List<Trip>> GetTripsByCompanyIdAsync(int companyId)
@@ -40,7 +40,7 @@ namespace Infrastructure.Repositories
                 .Include(t => t.Bus)
                 .Include(t => t.TripStations)
                     .ThenInclude(ts => ts.Station)
-                .Where(t => t.CompanyId == companyId && !t.IsDeleted)
+                .Where(t => t.CompanyId == companyId && !t.IsDeleted && t.Company.Status == "Approved")
                 .ToListAsync();
         }
 
@@ -54,7 +54,7 @@ namespace Infrastructure.Repositories
                 .Include(t => t.Bus)
                 .Include(t => t.TripStations)
                     .ThenInclude(ts => ts.Station)
-                .Where(t => t.RouteId == routeId && !t.IsDeleted)
+                .Where(t => t.RouteId == routeId && !t.IsDeleted && t.Company.Status == "Approved")
                 .ToListAsync();
         }
 
@@ -68,7 +68,7 @@ namespace Infrastructure.Repositories
                 .Include(t => t.Bus)
                 .Include(t => t.TripStations)
                     .ThenInclude(ts => ts.Station)
-                .Where(t => t.DriverId == driverId && !t.IsDeleted)
+                .Where(t => t.DriverId == driverId && !t.IsDeleted && t.Company.Status == "Approved")
                 .ToListAsync();
         }
 
@@ -82,7 +82,7 @@ namespace Infrastructure.Repositories
                 .Include(t => t.Bus)
                 .Include(t => t.TripStations)
                     .ThenInclude(ts => ts.Station)
-                .Where(t => t.CompanyId == companyId && !t.IsDeleted);
+                .Where(t => t.CompanyId == companyId && !t.IsDeleted && t.Company.Status == "Approved");
 
             var totalCount = await query.CountAsync();
             var trips = await query
@@ -122,18 +122,18 @@ namespace Infrastructure.Repositories
                     .ThenInclude(d => d.AppUser)
                 .Include(t => t.Company)
                 .Include(t => t.Bus)
-                .Where(t => !t.IsDeleted)
+                .Where(t => !t.IsDeleted && t.Company.Status == "Approved")
                 .ToListAsync();
         }
 
-        public new async Task<Trip> GetByIdAsync(int id)
+        public new async Task<Trip?> GetByIdAsync(int id)
         {
             return await _context.Trips
                 .Include(t => t.Route)
                 .Include(t => t.Driver)
                 .Include(t => t.Company)
                 .Include(t => t.Bus)
-                .FirstOrDefaultAsync(t => t.Id == id && !t.IsDeleted);
+                .FirstOrDefaultAsync(t => t.Id == id && !t.IsDeleted && t.Company.Status == "Approved");
         }
 
         // Add Update method that can be used synchronously
@@ -153,7 +153,7 @@ namespace Infrastructure.Repositories
                 .Include(t => t.TripStations)
                     .ThenInclude(ts => ts.Station)
                         .ThenInclude(s => s.City)
-                .Where(t => t.DepartureTime > currentDate && !t.IsDeleted && !t.IsCompleted)
+                .Where(t => t.DepartureTime > currentDate && !t.IsDeleted && !t.IsCompleted && t.Company.Status == "Approved")
                 .OrderBy(t => t.DepartureTime)
                 .ToListAsync();
         }
@@ -179,6 +179,7 @@ namespace Infrastructure.Repositories
                     t.AvailableSeats >= requiredSeats &&
                     !t.IsDeleted &&
                     !t.IsCompleted &&
+                    t.Company.Status == "Approved" &&
                     t.TripStations.Any(ts => ts.Station.CityId == startCityId) &&
                     t.TripStations.Any(ts => ts.Station.CityId == endCityId))
                 .OrderBy(t => t.DepartureTime)

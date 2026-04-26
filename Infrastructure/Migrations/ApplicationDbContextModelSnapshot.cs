@@ -172,6 +172,9 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("PaymentIntentId")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("StartStationId")
                         .HasColumnType("int");
 
@@ -332,6 +335,10 @@ namespace Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SuperAdminPhone")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SuperAdminUserName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -594,9 +601,6 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("PassengerId1")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
@@ -608,8 +612,8 @@ namespace Infrastructure.Migrations
 
                     b.Property<string>("TicketCode")
                         .IsRequired()
-                        .HasMaxLength(4)
-                        .HasColumnType("nvarchar(4)");
+                        .HasMaxLength(6)
+                        .HasColumnType("nvarchar(6)");
 
                     b.Property<int>("TripId")
                         .HasColumnType("int");
@@ -619,8 +623,6 @@ namespace Infrastructure.Migrations
                     b.HasIndex("BookingId");
 
                     b.HasIndex("PassengerId");
-
-                    b.HasIndex("PassengerId1");
 
                     b.HasIndex("TicketCode");
 
@@ -648,9 +650,6 @@ namespace Infrastructure.Migrations
                     b.Property<int?>("BusId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("BusId1")
-                        .HasColumnType("int");
-
                     b.Property<int>("CompanyId")
                         .HasColumnType("int");
 
@@ -674,11 +673,14 @@ namespace Infrastructure.Migrations
                     b.Property<int>("RouteId")
                         .HasColumnType("int");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BusId");
-
-                    b.HasIndex("BusId1");
 
                     b.HasIndex("CompanyId");
 
@@ -1082,14 +1084,10 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Domain.Entities.Passenger", "Passenger")
-                        .WithMany()
+                        .WithMany("Tickets")
                         .HasForeignKey("PassengerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("Domain.Entities.Passenger", null)
-                        .WithMany("Tickets")
-                        .HasForeignKey("PassengerId1");
 
                     b.HasOne("Domain.Entities.Trip", "Trip")
                         .WithMany("Tickets")
@@ -1107,13 +1105,9 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Domain.Entities.Trip", b =>
                 {
                     b.HasOne("Domain.Entities.Bus", "Bus")
-                        .WithMany()
+                        .WithMany("Trips")
                         .HasForeignKey("BusId")
                         .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Domain.Entities.Bus", null)
-                        .WithMany("Trips")
-                        .HasForeignKey("BusId1");
 
                     b.HasOne("Domain.Entities.Company", "Company")
                         .WithMany("Trips")

@@ -8,7 +8,7 @@ namespace Domain.Repositories.Interfaces
 {
     public interface ITripRepository : IGenericRepository<Trip>
     {
-        Task<Trip> GetTripByIdWithDetailsAsync(int tripId);
+        Task<Trip?> GetTripByIdWithDetailsAsync(int tripId);
         Task<List<Trip>> GetTripsByCompanyIdAsync(int companyId);
         Task<List<Trip>> GetTripsByRouteIdAsync(int routeId);
         Task<List<Trip>> GetTripsByDriverIdAsync(string driverId);

@@ -9,12 +9,12 @@ namespace Application.DTOs.Company
     public class CompanyFeedbackDto
     {
         public int Id { get; set; }
-        public string PassengerId { get; set; }
-        public string PassengerName { get; set; }
+        public string PassengerId { get; set; } = string.Empty;
+        public string PassengerName { get; set; } = string.Empty;
         
         [Range(1, 5)]
         public int Rating { get; set; }
-        public string Comment { get; set; }
+        public string? Comment { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 }

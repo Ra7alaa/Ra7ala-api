@@ -35,6 +35,7 @@ namespace Domain.Entities
         // Super Admin Data
         public string SuperAdminName { get; set; } = string.Empty;
         public string SuperAdminEmail { get; set; } = string.Empty;
+        public string SuperAdminUserName { get; set; } = string.Empty;
         public string SuperAdminPhone { get; set; } = string.Empty;
 
         // Registration status

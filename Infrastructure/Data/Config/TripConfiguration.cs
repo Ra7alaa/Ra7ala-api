@@ -30,7 +30,7 @@ namespace Infrastructure.Data.Config
 
             // Configure relationship with Bus
             builder.HasOne(t => t.Bus)
-                   .WithMany()
+                   .WithMany(b => b.Trips)
                    .HasForeignKey(t => t.BusId)
                    .IsRequired(false)
                    .OnDelete(DeleteBehavior.Restrict);

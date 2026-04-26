@@ -8,15 +8,12 @@ namespace Presentation.Extensions
     {
         public static IServiceCollection AddPaymentServices(this IServiceCollection services, IConfiguration configuration)
         {
-            // Configure Stripe settings
+            // Configure Stripe settings from appsettings.json
             services.Configure<StripeSettings>(configuration.GetSection("Stripe"));
-            
-            // Register HTTP client for Stripe (if needed for custom operations)
-            services.AddHttpClient<IPaymentService, PaymentService>();
-            
-            // Register payment service
+
+            // Register payment service (Stripe SDK manages its own HttpClient internally)
             services.AddScoped<IPaymentService, PaymentService>();
-            
+
             return services;
         }
     }

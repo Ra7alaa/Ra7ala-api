@@ -1,5 +1,7 @@
+using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi.Models;
 using Presentation.Extensions;
+using System.IO;
 
 namespace Presentation
 {
@@ -10,7 +12,14 @@ namespace Presentation
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    // Serialize all enums as strings (e.g. "Confirmed" instead of 1)
+                    // This prevents frontend .toLowerCase() crashes on numeric BookingStatus values
+                    options.JsonSerializerOptions.Converters.Add(
+                        new System.Text.Json.Serialization.JsonStringEnumConverter());
+                });
 
             builder.Services.AddRepositoryServices();
 
@@ -41,9 +50,6 @@ namespace Presentation
             
             // Configure Auth services
             builder.Services.AddAuthService();
-            
-            // Configure Repository services
-            builder.Services.AddRepositoryServices();
             
             // Configure Station services
             builder.Services.AddStationServices();
@@ -77,7 +83,24 @@ namespace Presentation
             // Use CORS middleware (should be before authentication)
             app.UseCorsMiddleware();
 
-            // Add static files middleware
+            // Serve the Angular build from wwwroot/browser
+            var browserRootPath = Path.Combine(app.Environment.WebRootPath ?? string.Empty, "browser");
+            if (Directory.Exists(browserRootPath))
+            {
+                var browserFileProvider = new PhysicalFileProvider(browserRootPath);
+
+                app.UseDefaultFiles(new DefaultFilesOptions
+                {
+                    FileProvider = browserFileProvider
+                });
+
+                app.UseStaticFiles(new StaticFileOptions
+                {
+                    FileProvider = browserFileProvider
+                });
+            }
+
+            // Keep the default wwwroot static file pipeline for uploads and other files
             app.UseStaticFiles();
 
             app.UseHttpsRedirection();
@@ -87,6 +110,17 @@ namespace Presentation
             app.UseAuthorization();
 
             app.MapControllers();
+
+            // Configure SPA fallback only when the built frontend exists on the server.
+            var browserIndexPath = Path.Combine(browserRootPath, "index.html");
+            if (File.Exists(browserIndexPath))
+            {
+                app.MapFallbackToFile("browser/index.html");
+            }
+            else
+            {
+                app.Logger.LogWarning("SPA fallback disabled because '{BrowserIndexPath}' was not found.", browserIndexPath);
+            }
 
             await app.RunAsync();
         }

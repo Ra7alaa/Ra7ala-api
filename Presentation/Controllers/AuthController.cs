@@ -27,6 +27,12 @@ namespace Presentation.Controllers
             var result = await _authService.LoginAsync(loginDto);
             if (!result.IsSuccess)
             {
+                if (result.Errors.Any(e => e.Contains("configuration", System.StringComparison.OrdinalIgnoreCase)))
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError,
+                        new ApiResponse(500, "Authentication is temporarily unavailable."));
+                }
+
                 return Unauthorized(new ApiResponse(401, "Invalid login credentials"));
             }
 

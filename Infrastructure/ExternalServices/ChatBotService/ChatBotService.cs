@@ -45,24 +45,18 @@ namespace Infrastructure.ExternalServices.ChatBotService
                 }
 
                 // Build trip context for the AI
-                string tripContext = BuildTripContext(tripsResult.Data);
+                string tripContext = BuildTripContext(tripsResult.Data ?? Enumerable.Empty<TripDto>());
 
                 // Create Gemini API request
-                var systemPrompt = $@"You are a helpful customer service assistant for Ra7ala, a transportation service. Your role is to help customers with their inquiries about trips.
+                var systemPrompt = $@"You are Ra7ala's customer service bot for a bus transportation service in Egypt.
+Rules:
+- Detect the user's language/dialect and respond in the exact same language and dialect.
+- Give helpful and detailed answers (5-7 sentences), including trip ID, time, price, available seats, and amenities.
+- If multiple trips match, list the top 2-3 options with their details.
+- Only answer questions about trips, routes, prices, seats, and amenities. Currency is EGP.
 
-                                            Instructions:
-                                            1. Detect the user's language and dialect from their message and respond in the same language and dialect (e.g., if they use Egyptian Arabic, respond in Egyptian Arabic; if they use English, respond in English).
-                                            2. Be concise and direct - keep your responses under 3 sentences whenever possible.
-                                            3. Always include specific details like trip IDs, times, prices, and available seats.
-                                            4. If multiple trips match a query, mention only the most relevant 2-3 options.
-                                            5. When mentioning times, format them clearly for easy reading.
-                                            6. Only answer queries related to trip schedules, routes, stations, prices, amenities, and bus details.
-                                            7. When responding in Arabic, format numbers and currency according to Arabic conventions.
-                                            8. Currency should be in EGP (Egyptian Pounds).
-                                            
-                                            Here's the full context about all available trips:
-
-                                            {tripContext}";
+Available trips:
+{tripContext}";
                 
                 var userQuestion = request.Message;
 
@@ -96,7 +90,7 @@ namespace Infrastructure.ExternalServices.ChatBotService
                 var apiUrl = $"{_geminiSettings.Endpoint}?key={_geminiSettings.ApiKey}";
 
                 // Send request to Gemini API with retries
-                HttpResponseMessage response = null;
+                HttpResponseMessage? response = null;
                 int retries = 0;
                 while (retries <= _geminiSettings.MaxRetries)
                 {
@@ -142,8 +136,13 @@ namespace Infrastructure.ExternalServices.ChatBotService
                 var responseJson = await response.Content.ReadAsStringAsync();
                 var apiResponse = JsonSerializer.Deserialize<GeminiResponseDto>(responseJson, jsonOptions);
 
-                if (apiResponse == null || apiResponse.Candidates == null || apiResponse.Candidates.Count == 0 ||
-                    apiResponse.Candidates[0].Content == null || apiResponse.Candidates[0].Content.Parts == null || !apiResponse.Candidates[0].Content.Parts.Any())
+                if (apiResponse == null || apiResponse.Candidates == null || apiResponse.Candidates.Count == 0)
+                {
+                    return ServiceResult<ChatBotResponseDto>.Failure("Invalid or empty response from Gemini API");
+                }
+
+                var firstCandidate = apiResponse.Candidates[0];
+                if (firstCandidate.Content == null || firstCandidate.Content.Parts == null || !firstCandidate.Content.Parts.Any())
                 {
                     return ServiceResult<ChatBotResponseDto>.Failure("Invalid or empty response from Gemini API");
                 }
@@ -151,11 +150,10 @@ namespace Infrastructure.ExternalServices.ChatBotService
                 // Create response DTO
                 var chatbotResponse = new ChatBotResponseDto
                 {
-                    Response = apiResponse.Candidates[0].Content.Parts.FirstOrDefault()?.Text ?? "No response content",
+                    Response = firstCandidate.Content.Parts.FirstOrDefault()?.Text ?? "No response content",
                     SessionId = request.SessionId,
                     Success = true
                 };
-
                 return ServiceResult<ChatBotResponseDto>.Success(chatbotResponse);
             }
             catch (Exception ex)
@@ -167,70 +165,24 @@ namespace Infrastructure.ExternalServices.ChatBotService
 
         private string BuildTripContext(IEnumerable<TripDto> trips)
         {
-            StringBuilder sb = new StringBuilder();
-            
-            // Group trips by route for better organization
-            var tripGroups = trips.GroupBy(t => t.RouteId);
-            
-            foreach (var tripGroup in tripGroups)
+            var tripList = trips.Take(30).ToList(); // Limit to 30 trips max
+            if (!tripList.Any()) return "No upcoming trips available.";
+
+            var sb = new StringBuilder();
+            sb.AppendLine("Available upcoming trips (summary):");
+
+            foreach (var trip in tripList)
             {
-                var firstTrip = tripGroup.First();
-                
-                // Get route information from first trip
-                string routeInfo = $"Route: {firstTrip.RouteName} (from {GetOriginCity(firstTrip)} to {GetDestinationCity(firstTrip)})";
-                sb.AppendLine(routeInfo);
-                
-                // Add trips for this route
-                foreach (var trip in tripGroup)
-                {
-                    // English version
-                    sb.AppendLine($"Trip ID: {trip.Id}");
-                    sb.AppendLine($"Route ID: {trip.RouteId}");
-                    sb.AppendLine($"Route Name: {trip.RouteName}");
-                    sb.AppendLine($"Departure Time: {trip.DepartureTime:yyyy-MM-dd HH:mm}");
-                    sb.AppendLine($"Arrival Time: {(trip.ArrivalTime.HasValue ? trip.ArrivalTime.Value.ToString("yyyy-MM-dd HH:mm") : "Not specified")}");
-                    sb.AppendLine($"Driver: {trip.DriverName} (ID: {trip.DriverId})");
-                    sb.AppendLine($"Driver Phone: {trip.DriverPhoneNumber}");
-                    sb.AppendLine($"Bus ID: {trip.BusId}");
-                    sb.AppendLine($"Bus Registration: {trip.BusRegistrationNumber}");
-                    sb.AppendLine($"Amenities: {trip.AmenityDescription}");
-                    sb.AppendLine($"Trip Status: {(trip.IsCompleted ? "Completed" : "Scheduled")}");
-                    sb.AppendLine($"Available Seats: {trip.AvailableSeats}");
-                    sb.AppendLine($"Company: {trip.CompanyName} (ID: {trip.CompanyId})");
-                    sb.AppendLine($"Price: {trip.Price} EGP");
-                    
-                    // Add stations information
-                    sb.AppendLine("Stations:");
-                    
-                    // Add all stations in the trip
-                    var orderedStations = trip.TripStations.OrderBy(s => s.SequenceNumber).ToList();
-                    
-                    for (int i = 0; i < orderedStations.Count; i++)
-                    {
-                        var station = orderedStations[i];
-                        string stationType = i == 0 ? "Departure" : (i == orderedStations.Count - 1 ? "Arrival" : "Stop");
-                        
-                        sb.AppendLine($"  - {stationType}: {station.StationName}, {station.CityName}");
-                        
-                        if (i == 0) // First station
-                        {
-                            sb.AppendLine($"     Departs: {station.DepartureTime:HH:mm} on {station.DepartureTime:yyyy-MM-dd}");
-                        }
-                        else if (i == orderedStations.Count - 1) // Last station
-                        {
-                            sb.AppendLine($"     Arrives: {(station.ArrivalTime.HasValue ? station.ArrivalTime.Value.ToString("HH:mm") : "Not specified")} on {(station.ArrivalTime.HasValue ? station.ArrivalTime.Value.ToString("yyyy-MM-dd") : "Not specified")}");
-                        }
-                        else // Intermediate station
-                        {
-                            sb.AppendLine($"     Arrives: {(station.ArrivalTime.HasValue ? station.ArrivalTime.Value.ToString("HH:mm") : "Not specified")} on {(station.ArrivalTime.HasValue ? station.ArrivalTime.Value.ToString("yyyy-MM-dd") : "Not specified")}");
-                            sb.AppendLine($"     Departs: {station.DepartureTime:HH:mm} on {station.DepartureTime:yyyy-MM-dd}");
-                        }
-                    }
-                    
-                    sb.AppendLine(new string('-', 40));
-                }
-                
-                sb.AppendLine();
+                var from = GetOriginCity(trip);
+                var to   = GetDestinationCity(trip);
+                sb.AppendLine(
+                    $"[ID:{trip.Id}] {from}→{to} | " +
+                    $"Dep:{trip.DepartureTime:MM-dd HH:mm} | " +
+                    $"Price:{trip.Price}EGP | " +
+                    $"Seats:{trip.AvailableSeats} | " +
+                    $"Co:{trip.CompanyName} | " +
+                    $"Bus:{trip.BusRegistrationNumber} | " +
+                    $"Amenities:{trip.AmenityDescription}");
             }
 
             return sb.ToString();

@@ -25,7 +25,7 @@ namespace Infrastructure.Data.Config
 
             // Configure relationship with Passenger
             builder.HasOne(t => t.Passenger)
-                   .WithMany()
+                   .WithMany(p => p.Tickets)
                    .HasForeignKey(t => t.PassengerId)
                    .OnDelete(DeleteBehavior.Restrict);
 
@@ -48,7 +48,7 @@ namespace Infrastructure.Data.Config
             // Configure TicketCode property
             builder.Property(t => t.TicketCode)
                    .IsRequired()
-                   .HasMaxLength(4);
+                   .HasMaxLength(6);
                    
             // Add an index on TicketCode for faster lookups
             builder.HasIndex(t => t.TicketCode);

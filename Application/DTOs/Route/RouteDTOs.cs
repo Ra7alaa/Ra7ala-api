@@ -12,7 +12,7 @@ namespace Application.DTOs
 
         [Required(ErrorMessage = "Route name is required")]
         [StringLength(100, ErrorMessage = "Route name cannot exceed 100 characters")]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Start city ID is required")]
         public int StartCityId { get; set; }
@@ -38,7 +38,7 @@ namespace Application.DTOs
 
         [Required(ErrorMessage = "Route name is required")]
         [StringLength(100, ErrorMessage = "Route name cannot exceed 100 characters")]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Start city ID is required")]
         public int StartCityId { get; set; }
@@ -60,15 +60,15 @@ namespace Application.DTOs
     public class RouteDto
     {
         public int Id { get; set; }
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
         public int StartCityId { get; set; }
-        public string StartCityName { get; set; }
+        public string StartCityName { get; set; } = string.Empty;
         public int EndCityId { get; set; }
-        public string EndCityName { get; set; }
+        public string EndCityName { get; set; } = string.Empty;
         public int Distance { get; set; }
         public int EstimatedDuration { get; set; }
         public int CompanyId { get; set; }
-        public string CompanyName { get; set; }
+        public string CompanyName { get; set; } = string.Empty;
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
         public List<RouteStationResponseDto> RouteStations { get; set; } = new List<RouteStationResponseDto>();
@@ -89,9 +89,9 @@ namespace Application.DTOs
     public class RouteStationResponseDto
     {
         public int StationId { get; set; }
-        public string StationName { get; set; }
+        public string StationName { get; set; } = string.Empty;
         public int CityId { get; set; }
-        public string CityName { get; set; }
+        public string CityName { get; set; } = string.Empty;
         public int SequenceNumber { get; set; }
     }
 

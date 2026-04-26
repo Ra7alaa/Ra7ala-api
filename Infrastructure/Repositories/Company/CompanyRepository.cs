@@ -50,7 +50,7 @@ namespace Infrastructure.Repositories.Company
                 .Include(c => c.Feedbacks)
                     .ThenInclude(sa => sa!.Passenger)
                 .FirstOrDefaultAsync(c => c.Id == id)
-                ?? throw new Exception("Company not found or not approved.");
+                ?? throw new Exception("Company not found.");
         }
 
        

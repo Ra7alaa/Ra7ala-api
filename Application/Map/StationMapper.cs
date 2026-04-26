@@ -8,7 +8,7 @@ namespace Application.Map
 {
     public static class StationMapper
     {
-        public static StationDto ToDto(this Station station)
+        public static StationDto? ToDto(this Station? station)
         {
             if (station == null)
                 return null;
@@ -26,12 +26,12 @@ namespace Application.Map
             };
         }
 
-        public static IEnumerable<StationDto> ToDtoList(this IEnumerable<Station> stations)
+        public static IEnumerable<StationDto>? ToDtoList(this IEnumerable<Station>? stations)
         {
-            return stations?.Select(s => s.ToDto()).ToList();
+            return stations?.Select(s => s.ToDto()).Where(s => s != null).Select(s => s!).ToList();
         }
 
-        public static Station ToEntity(this StationDto stationDto)
+        public static Station? ToEntity(this StationDto? stationDto)
         {
             if (stationDto == null)
                 return null;
@@ -48,7 +48,7 @@ namespace Application.Map
             };
         }
 
-        public static Station ToEntity(this StationAddUpdateDto stationDto)
+        public static Station? ToEntity(this StationAddUpdateDto? stationDto)
         {
             if (stationDto == null)
                 return null;
@@ -64,7 +64,7 @@ namespace Application.Map
             };
         }
 
-        public static Station ToEntity(this StationDto stationDto, Station existingStation)
+        public static Station? ToEntity(this StationDto? stationDto, Station? existingStation)
         {
             if (stationDto == null || existingStation == null)
                 return existingStation;
@@ -78,7 +78,7 @@ namespace Application.Map
             return existingStation;
         }
 
-        public static Station ToEntity(this StationAddUpdateDto stationDto, Station existingStation)
+        public static Station? ToEntity(this StationAddUpdateDto? stationDto, Station? existingStation)
         {
             if (stationDto == null || existingStation == null)
                 return existingStation;
@@ -92,8 +92,7 @@ namespace Application.Map
             return existingStation;
         }
 
-        // New method to convert a station to a DTO for display within cities
-        public static StationInCityDto ToStationInCityDto(this Station station)
+        public static StationInCityDto? ToStationInCityDto(this Station? station)
         {
             if (station == null)
                 return null;
@@ -108,14 +107,12 @@ namespace Application.Map
             };
         }
 
-        // Method to convert a collection of stations to a list of DTOs for display within cities
-        public static IEnumerable<StationInCityDto> ToStationInCityDtoList(this IEnumerable<Station> stations)
+        public static IEnumerable<StationInCityDto>? ToStationInCityDtoList(this IEnumerable<Station>? stations)
         {
-            return stations?.Select(s => s.ToStationInCityDto()).ToList();
+            return stations?.Select(s => s.ToStationInCityDto()).Where(s => s != null).Select(s => s!).ToList();
         }
 
-        // Convert CompanyStationAddUpdateDto to Station entity
-        public static Station ToEntity(this CompanyStationAddUpdateDto companyStationDto)
+        public static Station? ToEntity(this CompanyStationAddUpdateDto? companyStationDto)
         {
             if (companyStationDto == null)
                 return null;
@@ -126,13 +123,12 @@ namespace Application.Map
                 Latitude = companyStationDto.Latitude,
                 Longitude = companyStationDto.Longitude,
                 CityId = companyStationDto.CityId,
-                CompanyId = companyStationDto.CompanyId, // CompanyId is required here
+                CompanyId = companyStationDto.CompanyId,
                 IsDeleted = false
             };
         }
 
-        // Update existing Station entity using CompanyStationAddUpdateDto
-        public static Station ToEntity(this CompanyStationAddUpdateDto companyStationDto, Station existingStation)
+        public static Station? ToEntity(this CompanyStationAddUpdateDto? companyStationDto, Station? existingStation)
         {
             if (companyStationDto == null || existingStation == null)
                 return existingStation;
@@ -141,7 +137,7 @@ namespace Application.Map
             existingStation.Latitude = companyStationDto.Latitude;
             existingStation.Longitude = companyStationDto.Longitude;
             existingStation.CityId = companyStationDto.CityId;
-            existingStation.CompanyId = companyStationDto.CompanyId; // CompanyId is required here
+            existingStation.CompanyId = companyStationDto.CompanyId;
 
             return existingStation;
         }

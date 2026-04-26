@@ -18,25 +18,24 @@ namespace Infrastructure.Repositories
         {
             return await _context.Buses
                 .Include(b => b.Company)
-                .Where(b => !b.IsDeleted)
+                .Where(b => !b.IsDeleted && b.Company.Status == "Approved")
                 .ToListAsync();
 
         }
 
         // Override GetByIdAsync to exclude deleted buses
-     public new async Task<Bus> GetByIdAsync(int id)
-{
-    return await _context.Buses
-        .Include(b => b.Company)
-        .FirstOrDefaultAsync(b => b.Id == id && !b.IsDeleted) 
-        ?? throw new KeyNotFoundException($"Bus with id {id} not found");
-}
+        public new async Task<Bus?> GetByIdAsync(int id)
+        {
+            return await _context.Buses
+                .Include(b => b.Company)
+                .FirstOrDefaultAsync(b => b.Id == id && !b.IsDeleted && b.Company.Status == "Approved");
+        }
 
         public async Task<IEnumerable<Bus>> GetBusesByCompanyIdAsync(int companyId)
         {
             return await _context.Buses
                 .Include(b => b.Company)
-                .Where(b => b.CompanyId == companyId && !b.IsDeleted)
+                .Where(b => b.CompanyId == companyId && !b.IsDeleted && b.Company.Status == "Approved")
                 .ToListAsync();
         }
     }

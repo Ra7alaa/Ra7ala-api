@@ -21,7 +21,7 @@ namespace Infrastructure.Repositories
             return await _context.Stations
                 .Include(s => s.City)
                 .Include(s => s.Company)
-                .Where(s => s.CityId == cityId && !s.IsDeleted)
+                .Where(s => s.CityId == cityId && !s.IsDeleted && (s.CompanyId == null || (s.Company != null && s.Company.Status == "Approved")))
                 .ToListAsync();
         }
 
@@ -30,7 +30,7 @@ namespace Infrastructure.Repositories
             return await _context.Stations
                 .Include(s => s.City)
                 .Include(s => s.Company)
-                .Where(s => s.CompanyId == companyId && !s.IsDeleted)
+                .Where(s => s.CompanyId == companyId && !s.IsDeleted && s.Company != null && s.Company.Status == "Approved")
                 .ToListAsync();
         }
 
@@ -40,7 +40,7 @@ namespace Infrastructure.Repositories
             var stations = await _context.Stations
                 .Include(s => s.City)
                 .Include(s => s.Company)
-                .Where(s => !s.IsDeleted)
+                .Where(s => !s.IsDeleted && (s.CompanyId == null || (s.Company != null && s.Company.Status == "Approved")))
                 .ToListAsync();
 
             // حساب المسافة بين الموقع المعطى وكل محطة
@@ -85,7 +85,7 @@ namespace Infrastructure.Repositories
             return await _context.Stations
                 .Include(s => s.City)
                 .Include(s => s.Company)
-                .Where(s => !s.IsDeleted)
+                .Where(s => !s.IsDeleted && (s.CompanyId == null || (s.Company != null && s.Company.Status == "Approved")))
                 .ToListAsync();
         }
 
@@ -105,7 +105,7 @@ namespace Infrastructure.Repositories
             return await _context.Stations
                 .Include(s => s.City)
                 .Include(s => s.Company)
-                .Where(s => s.CompanyId == companyId && !s.IsDeleted)
+                .Where(s => s.CompanyId == companyId && !s.IsDeleted && s.Company != null && s.Company.Status == "Approved")
                 .ToListAsync();
         }
 
@@ -115,7 +115,7 @@ namespace Infrastructure.Repositories
             return await _context.Stations
                 .Include(s => s.City)
                 .Include(s => s.Company)
-                .Where(s => (s.CompanyId == null || s.CompanyId == companyId) && !s.IsDeleted)
+                .Where(s => (s.CompanyId == null || (s.CompanyId == companyId && s.Company != null && s.Company.Status == "Approved")) && !s.IsDeleted)
                 .ToListAsync();
         }
 
@@ -124,7 +124,7 @@ namespace Infrastructure.Repositories
             return await _context.Stations
                 .Include(s => s.City)
                 .Include(s => s.Company)
-                .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
+                .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted && (s.CompanyId == null || (s.Company != null && s.Company.Status == "Approved")));
         }
 
         public async Task<IEnumerable<Station>> GetStationsByCityNameAsync(string cityName)
@@ -132,7 +132,7 @@ namespace Infrastructure.Repositories
             return await _context.Stations
                 .Include(s => s.City)
                 .Include(s => s.Company)
-                .Where(s => s.City.Name == cityName && !s.IsDeleted)
+                .Where(s => s.City != null && s.City.Name == cityName && !s.IsDeleted && (s.CompanyId == null || (s.Company != null && s.Company.Status == "Approved")))
                 .ToListAsync();
         }
     }

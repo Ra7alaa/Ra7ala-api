@@ -6,6 +6,7 @@ using Domain.Enums;
 using Domain.Repositories.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 using System.Text;
 
@@ -19,6 +20,7 @@ namespace Application.Services.Auth
         private readonly IEmailService _emailService;
         private readonly IFileService _fileService;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ILogger<AuthService> _logger;
 
         public AuthService(
             UserManager<AppUser> userManager,
@@ -26,7 +28,8 @@ namespace Application.Services.Auth
             IJwtService jwtService,
             IEmailService emailService,
             IFileService fileService,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            ILogger<AuthService> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -34,6 +37,7 @@ namespace Application.Services.Auth
             _emailService = emailService;
             _fileService = fileService;
             _unitOfWork = unitOfWork;
+            _logger = logger;
         }
 
         #region Common Authentication Methods
@@ -66,8 +70,17 @@ namespace Application.Services.Auth
             user.LastLogin = DateTime.UtcNow;
             await _userManager.UpdateAsync(user);
 
-            // Generate JWT token
-            var token = await _jwtService.GenerateTokenAsync(user);
+            string token;
+            try
+            {
+                // Generate JWT token
+                token = await _jwtService.GenerateTokenAsync(user);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Token generation failed for user '{UserId}'.", user.Id);
+                return ServiceResult<AuthResponseDto>.Failure("Authentication server configuration error.");
+            }
             
             // Create response with user information
             var authResponse = new AuthResponseDto
@@ -125,7 +138,7 @@ namespace Application.Services.Auth
 
         public async Task<ServiceResult> ChangePasswordAsync(ClaimsPrincipal user, ChangePasswordDto changePasswordDto)
         {
-            if (user == null || !user.Identity.IsAuthenticated)
+            if (user == null || !(user.Identity?.IsAuthenticated == true))
             {
                 return ServiceResult.Failure("Authentication required.");
             }
@@ -195,7 +208,7 @@ namespace Application.Services.Auth
             // Create AppUser with just the basic required information
             var appUser = new AppUser
             {
-                UserName = superAdminDto.Email,
+                UserName = superAdminDto.UserName,
                 Email = superAdminDto.Email,
                 PhoneNumber = superAdminDto.PhoneNumber,
                 FullName = superAdminDto.FullName,
@@ -234,7 +247,7 @@ namespace Application.Services.Auth
             // Send email with credentials
             await _emailService.SendCompanyUserCredientialsEmailAsync(
                 appUser.Email,
-                appUser.Email,
+                appUser.UserName,
                 password,
                 appUser.FullName,
                 "Super Admin",
@@ -265,7 +278,7 @@ namespace Application.Services.Auth
             // Create AppUser
             var appUser = new AppUser
             {
-                UserName = passengerDto.Email,
+                UserName = passengerDto.UserName,
                 Email = passengerDto.Email,
                 PhoneNumber = passengerDto.PhoneNumber,
                 FullName = passengerDto.FullName,
@@ -301,6 +314,19 @@ namespace Application.Services.Auth
             await _unitOfWork.Passengers.AddAsync(passenger);
             await _unitOfWork.SaveChangesAsync();
 
+            // Send welcome email
+            try
+            {
+                await _emailService.SendEmailAsync(
+                    appUser.Email,
+                    "Welcome to Ra7ala!",
+                    $"<h1>Welcome {appUser.FullName}!</h1><p>Thank you for joining Ra7ala. Your account has been created successfully with username: <b>{appUser.UserName}</b>.</p>");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send welcome email to {Email}", appUser.Email);
+            }
+
             return ServiceResult<IdentityResult>.Success(result);
         }
 
@@ -312,7 +338,7 @@ namespace Application.Services.Auth
                 return ServiceResult<IdentityResult>.Failure("Authentication required: user is null");
             }
             
-            if (!user.Identity.IsAuthenticated)
+            if (!(user.Identity?.IsAuthenticated == true))
             {
                 return ServiceResult<IdentityResult>.Failure("Authentication required: user is not authenticated");
             }
@@ -366,7 +392,7 @@ namespace Application.Services.Auth
             // Create AppUser
             var appUser = new AppUser
             {
-                UserName = driverDto.Email,
+                UserName = driverDto.UserName,
                 Email = driverDto.Email,
                 PhoneNumber = driverDto.PhoneNumber,
                 FullName = driverDto.FullName,
@@ -415,7 +441,7 @@ namespace Application.Services.Auth
             // Send email with credentials and company info
             await _emailService.SendCompanyUserCredientialsEmailAsync(
                 appUser.Email,
-                appUser.Email,
+                appUser.UserName,
                 password,
                 appUser.FullName,
                 "Driver",
@@ -432,7 +458,7 @@ namespace Application.Services.Auth
                 return ServiceResult<IdentityResult>.Failure("Authentication required: user is null");
             }
             
-            if (!user.Identity.IsAuthenticated)
+            if (!(user.Identity?.IsAuthenticated == true))
             {
                 return ServiceResult<IdentityResult>.Failure("Authentication required: user is not authenticated");
             }
@@ -486,7 +512,7 @@ namespace Application.Services.Auth
             // Create AppUser
             var appUser = new AppUser
             {
-                UserName = adminDto.Email,
+                UserName = adminDto.UserName,
                 Email = adminDto.Email,
                 PhoneNumber = adminDto.PhoneNumber,
                 FullName = adminDto.FullName,
@@ -533,7 +559,7 @@ namespace Application.Services.Auth
             // Send email with credentials and company info
             await _emailService.SendCompanyUserCredientialsEmailAsync(
                 appUser.Email,
-                appUser.Email,
+                appUser.UserName,
                 password,
                 appUser.FullName,
                 "Admin",
@@ -549,7 +575,7 @@ namespace Application.Services.Auth
         public async Task<ServiceResult> UpdateSuperAdminAsync(ClaimsPrincipal user, string? superAdminId, UpdateSuperAdminDto updateSuperAdminDto)
         {
             // Authentication validation checks
-            if (user == null || !user.Identity.IsAuthenticated)
+            if (user == null || !(user.Identity?.IsAuthenticated == true))
             {
                 return ServiceResult.Failure("Authentication required");
             }
@@ -631,7 +657,7 @@ namespace Application.Services.Auth
         public async Task<ServiceResult> UpdateAdminAsync(ClaimsPrincipal user, string? adminId, UpdateAdminDto updateAdminDto)
         {
             // Authentication validation checks
-            if (user == null || !user.Identity.IsAuthenticated)
+            if (user == null || !(user.Identity?.IsAuthenticated == true))
             {
                 return ServiceResult.Failure("Authentication required");
             }
@@ -740,7 +766,7 @@ namespace Application.Services.Auth
         public async Task<ServiceResult> UpdatePassengerAsync(ClaimsPrincipal user, UpdatePassengerDto updatePassengerDto)
         {
             // Authentication validation checks
-            if (user == null || !user.Identity.IsAuthenticated)
+            if (user == null || !(user.Identity?.IsAuthenticated == true))
             {
                 return ServiceResult.Failure("Authentication required");
             }
@@ -801,7 +827,7 @@ namespace Application.Services.Auth
         public async Task<ServiceResult> UpdateDriverAsync(ClaimsPrincipal user, string? driverId, UpdateDriverDto updateDriverDto)
         {
             // Authentication validation checks
-            if (user == null || !user.Identity.IsAuthenticated)
+            if (user == null || !(user.Identity?.IsAuthenticated == true))
             {
                 return ServiceResult.Failure("Authentication required");
             }
@@ -934,7 +960,7 @@ namespace Application.Services.Auth
         public async Task<ServiceResult<object>> GetMyProfileAsync(ClaimsPrincipal user)
         {
             // Authentication validation checks
-            if (user == null || !user.Identity.IsAuthenticated)
+            if (user == null || !(user.Identity?.IsAuthenticated == true))
             {
                 return ServiceResult<object>.Failure("Authentication required");
             }
@@ -1215,7 +1241,7 @@ namespace Application.Services.Auth
         public async Task<ServiceResult<IEnumerable<AdminProfileDto>>> GetAllAdminsInMyCompanyAsync(ClaimsPrincipal user)
         {
             // Authentication validation checks
-            if (user == null || !user.Identity.IsAuthenticated)
+            if (user == null || !(user.Identity?.IsAuthenticated == true))
             {
                 return ServiceResult<IEnumerable<AdminProfileDto>>.Failure("Authentication required");
             }
@@ -1291,7 +1317,7 @@ namespace Application.Services.Auth
         public async Task<ServiceResult<IEnumerable<DriverProfileDto>>> GetAllDriversInMyCompanyAsync(ClaimsPrincipal user)
         {
             // Authentication validation checks
-            if (user == null || !user.Identity.IsAuthenticated)
+            if (user == null || !(user.Identity?.IsAuthenticated == true))
             {
                 return ServiceResult<IEnumerable<DriverProfileDto>>.Failure("Authentication required");
             }

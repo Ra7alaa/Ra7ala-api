@@ -1,7 +1,9 @@
 using Application.DTOs.Payment;
+using Application.Models;
 using Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Presentation.Errors;
 using System.Security.Claims;
 
@@ -14,11 +16,16 @@ namespace Presentation.Controllers
     {
         private readonly IPaymentService _paymentService;
         private readonly ILogger<PaymentsController> _logger;
+        private readonly StripeSettings _stripeSettings;
 
-        public PaymentsController(IPaymentService paymentService, ILogger<PaymentsController> logger)
+        public PaymentsController(
+            IPaymentService paymentService,
+            ILogger<PaymentsController> logger,
+            IOptions<StripeSettings> stripeSettings)
         {
             _paymentService = paymentService;
             _logger = logger;
+            _stripeSettings = stripeSettings.Value;
         }
 
         /// <summary>
@@ -202,11 +209,10 @@ namespace Presentation.Controllers
         {
             try
             {
-                // Only return non-sensitive configuration
                 var config = new
                 {
-                    PublishableKey = "pk_test_51RKm5oIYSOR8cCsxAVTcbeYKIZHDQUWHBEPouuhqnbxdH3iTZxxoKbdHKQKGNhSLQ3svnidrJa9kEy37XQUzxBXk00JBAKL4f1",
-                    Currency = "usd"
+                    PublishableKey = _stripeSettings.PublishableKey,
+                    Currency = _stripeSettings.Currency
                 };
 
                 return Ok(new ApiResponse(200, "Stripe configuration retrieved successfully", config));

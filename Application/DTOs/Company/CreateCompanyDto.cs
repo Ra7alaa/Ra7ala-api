@@ -48,6 +48,10 @@ namespace Application.DTOs.Company
         [StringLength(100, ErrorMessage = "Email cannot exceed 100 characters")]
         public string SuperAdminEmail { get; set; } = string.Empty;
 
+        [Required(ErrorMessage = "Super Admin username is required")]
+        [StringLength(50, ErrorMessage = "Username cannot exceed 50 characters")]
+        public string SuperAdminUserName { get; set; } = string.Empty;
+
         [Required(ErrorMessage = "Super Admin phone number is required")]
         [Phone(ErrorMessage = "Invalid phone number format")]
         [StringLength(20, ErrorMessage = "Phone number cannot exceed 20 characters")]

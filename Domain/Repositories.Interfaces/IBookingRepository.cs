@@ -7,7 +7,7 @@ namespace Domain.Repositories.Interfaces
 {
     public interface IBookingRepository : IGenericRepository<Booking>
     {
-        Task<Booking> GetBookingWithDetailsAsync(int bookingId);
+        Task<Booking?> GetBookingWithDetailsAsync(int bookingId);
         Task<PaginatedBookingsResult> GetPaginatedBookingsByPassengerIdAsync(string passengerId, int pageNumber, int pageSize);
     }
     

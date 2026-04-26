@@ -42,7 +42,7 @@ namespace Application.Services.Trip
                     return ServiceResult<TripDto>.Failure($"Driver with ID {createDto.DriverId} not found.");
 
                 // Validate bus if provided
-                Domain.Entities.Bus bus = null;
+                Domain.Entities.Bus? bus = null;
                 if (createDto.BusId.HasValue)
                 {
                     bus = await _unitOfWork.Buses.GetByIdAsync(createDto.BusId.Value);
@@ -150,7 +150,7 @@ namespace Application.Services.Trip
             try
             {
                 var trips = await _unitOfWork.Trips.GetTripsByCompanyIdAsync(companyId);
-                var tripsDto = trips.Select(MapTripToDto).ToList();
+                var tripsDto = trips.Select(MapTripToDto).Where(t => t != null).Select(t => t!).ToList();
                 
                 return ServiceResult<IEnumerable<TripDto>>.Success(tripsDto);
             }
@@ -173,7 +173,7 @@ namespace Application.Services.Trip
                     PageSize = pageSize,
                     TotalCount = paginatedResult.TotalCount,
                     TotalPages = (int)Math.Ceiling(paginatedResult.TotalCount / (double)pageSize),
-                    Trips = paginatedResult.Trips.Select(MapTripToDto).ToList()
+                    Trips = paginatedResult.Trips.Select(MapTripToDto).Where(t => t != null).Select(t => t!).ToList()
                 };
 
                 return ServiceResult<PaginatedTripDto>.Success(paginatedDto);
@@ -190,7 +190,7 @@ namespace Application.Services.Trip
             try
             {
                 var trips = await _unitOfWork.Trips.GetTripsByRouteIdAsync(routeId);
-                var tripsDto = trips.Select(MapTripToDto).ToList();
+                var tripsDto = trips.Select(MapTripToDto).Where(t => t != null).Select(t => t!).ToList();
                 
                 return ServiceResult<IEnumerable<TripDto>>.Success(tripsDto);
             }
@@ -206,7 +206,7 @@ namespace Application.Services.Trip
             try
             {
                 var trips = await _unitOfWork.Trips.GetTripsByDriverIdAsync(driverId);
-                var tripsDto = trips.Select(MapTripToDto).ToList();
+                var tripsDto = trips.Select(MapTripToDto).Where(t => t != null).Select(t => t!).ToList();
                 
                 return ServiceResult<IEnumerable<TripDto>>.Success(tripsDto);
             }
@@ -266,7 +266,7 @@ namespace Application.Services.Trip
             {
                 var currentDate = DateTime.UtcNow;
                 var trips = await _unitOfWork.Trips.GetAllFutureTripsAsync(currentDate);
-                var tripsDto = trips.Select(MapTripToDto).ToList();
+                var tripsDto = trips.Select(MapTripToDto).Where(t => t != null).Select(t => t!).ToList();
                 
                 return ServiceResult<IEnumerable<TripDto>>.Success(tripsDto);
             }
@@ -294,7 +294,7 @@ namespace Application.Services.Trip
                     return ServiceResult<IEnumerable<TripDto>>.Failure("Required seats must be greater than 0.");
 
                 var trips = await _unitOfWork.Trips.SearchTripsAsync(startCityId, endCityId, departureDate, requiredSeats);
-                var tripsDto = trips.Select(MapTripToDto).ToList();
+                var tripsDto = trips.Select(MapTripToDto).Where(t => t != null).Select(t => t!).ToList();
                 
                 return ServiceResult<IEnumerable<TripDto>>.Success(tripsDto);
             }
@@ -305,7 +305,7 @@ namespace Application.Services.Trip
             }
         }
 
-        private TripDto MapTripToDto(Domain.Entities.Trip trip)
+        private TripDto? MapTripToDto(Domain.Entities.Trip trip)
         {
             if (trip == null) return null;
 

@@ -62,10 +62,21 @@ namespace Presentation.Extensions
                     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ra7ala API v1");
                     c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None); // Collapses all endpoints by default
                     c.DefaultModelsExpandDepth(-1); // Hide models section
+
+                });
+            } else
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ra7ala API v1");
+                    c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None); // Collapses all endpoints by default
+                    c.DefaultModelsExpandDepth(-1); // Hide models section
+                    c.RoutePrefix = "api-docs"; // Different route for production
                 });
             }
 
-            return app;
+                return app;
         }
     }
 }

@@ -14,6 +14,9 @@ namespace Domain.Entities
         public bool IsPaid { get; set; } = false;
         public int NumberOfTickets { get; set; } = 1;
 
+        // Stripe PaymentIntent ID stored after successful payment (used for refunds)
+        public string? PaymentIntentId { get; set; }
+
         // Navigation properties
         public virtual Passenger Passenger { get; set; } = null!;
         public virtual Trip Trip { get; set; } = null!;

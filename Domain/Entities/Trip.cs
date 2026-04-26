@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Domain.Entities
 {
     public class Trip : BaseEntity<int>
@@ -10,7 +12,12 @@ namespace Domain.Entities
         public bool IsCompleted { get; set; } = false;
         public int AvailableSeats { get; set; }
         public int CompanyId { get; set; }
-        public decimal Price { get; set; } 
+        public decimal Price { get; set; }
+
+        /// <summary>Optimistic concurrency token — EF Core checks this on every UPDATE.
+        /// Throws DbUpdateConcurrencyException if two concurrent requests collide (prevents overbooking).</summary>
+        [Timestamp]
+        public byte[]? RowVersion { get; set; }
 
         // Navigation properties
         public virtual Route Route { get; set; } = null!;

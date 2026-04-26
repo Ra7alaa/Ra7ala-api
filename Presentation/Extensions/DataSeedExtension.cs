@@ -1,4 +1,5 @@
 using Infrastructure.Data.DataSeed;
+using Infrastructure.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,6 +29,10 @@ namespace Presentation.Extensions
                 try
                 {
                     logger.LogInformation("Checking database connection...");
+
+                    var dbContext = services.GetRequiredService<ApplicationDbContext>();
+                    logger.LogInformation("Applying pending database migrations...");
+                    await dbContext.Database.MigrateAsync();
                     
                     var seedService = services.GetRequiredService<Ra7alaDataSeed>();
                     await seedService.SeedAsync();

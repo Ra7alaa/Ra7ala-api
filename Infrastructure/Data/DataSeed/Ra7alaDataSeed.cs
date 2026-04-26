@@ -41,13 +41,13 @@ namespace Infrastructure.Data.DataSeed
     {
         _logger.LogInformation("Starting database seeding process...");
 
-        // Get passwords from configuration
+        // Get passwords from configuration; fallback when missing or empty.
         var seedPasswords = _configuration.GetSection("SeedUserPasswords");
-        var ownerPassword = seedPasswords["Owner"] ?? "Owner123!";
-        var superAdminPassword = seedPasswords["SuperAdmin"] ?? "SuperAdmin123!";
-        var adminPassword = seedPasswords["Admin"] ?? "Admin123!";
-        var driverPassword = seedPasswords["Driver"] ?? "Driver123!";
-        var passengerPassword = seedPasswords["Passenger"] ?? "Passenger123!";
+        var ownerPassword = GetSeedPassword(seedPasswords, "Owner", "Owner123!");
+        var superAdminPassword = GetSeedPassword(seedPasswords, "SuperAdmin", "SuperAdmin123!");
+        var adminPassword = GetSeedPassword(seedPasswords, "Admin", "Admin123!");
+        var driverPassword = GetSeedPassword(seedPasswords, "Driver", "Driver123!");
+        var passengerPassword = GetSeedPassword(seedPasswords, "Passenger", "Passenger123!");
 
         // Seed data in sequence
         await SeedRolesAsync();
@@ -58,10 +58,7 @@ namespace Infrastructure.Data.DataSeed
         await SeedPassengersAsync(passengerPassword);
         await SeedCitiesAsync();
         await SeedStationsAsync();
-        
-        // Add new seeding methods
         await SeedBusesAsync();
-        // In SeedAsync method
         await SeedRoutesAsync();
         await SeedRouteStationsAsync();  
         await SeedTripsAsync();
@@ -77,6 +74,12 @@ namespace Infrastructure.Data.DataSeed
         throw;
     }
 }
+
+    private static string GetSeedPassword(IConfigurationSection section, string key, string fallback)
+    {
+        var configuredValue = section[key];
+        return string.IsNullOrWhiteSpace(configuredValue) ? fallback : configuredValue;
+    }
 
         private async Task SeedRolesAsync()
         {
@@ -132,14 +135,13 @@ namespace Infrastructure.Data.DataSeed
         private async Task SeedCompaniesWithSuperAdminsAsync(string password)
         {
             _logger.LogInformation("Seeding companies and super admins...");
-            
-            if (!await _context.Companies.AnyAsync())
+
+            var companies = await _context.Companies.ToListAsync();
+
+            if (!companies.Any())
             {
-                _logger.LogInformation("Creating 5 companies");
-                
-                
-                // In SeedCompaniesWithSuperAdminsAsync method
-                var companies = new List<Company>
+                // Create 5 companies
+                companies = new List<Company>
                 {
                     new Company
                     {
@@ -234,77 +236,90 @@ namespace Infrastructure.Data.DataSeed
                 };
                 await _context.Companies.AddRangeAsync(companies);
                 await _context.SaveChangesAsync();
-
-                _logger.LogInformation("Creating 5 super admins for companies");
-                
-                var superAdminCredentials = new List<(string username, string email, string fullName, string phone, DateTime dob, int companyId)>
-                {
-                    ("karim_superadmin", "karim@cairotransit.com", "Karim Hassan", "+20123456789", new DateTime(1980, 3, 15), 1),
-                    ("nour_superadmin", "nour@alexrides.com", "Nour Ahmed", "+20123456790", new DateTime(1979, 7, 22), 2),
-                    ("amr_superadmin", "amr@deltatransport.com", "Amr Mahmoud", "+20123456791", new DateTime(1982, 5, 10), 3),
-                    ("heba_superadmin", "heba@luxortravels.com", "Heba Ali", "+20123456792", new DateTime(1981, 9, 18), 4),
-                    ("salem_superadmin", "salem@redseamobility.com", "Salem Mostafa", "+20123456793", new DateTime(1978, 11, 25), 5)
-                };
-
-                foreach (var cred in superAdminCredentials)
-                {
-                    if (await _userManager.FindByNameAsync(cred.username) == null)
-                    {
-                        _logger.LogInformation("Creating super admin user: {Username}", cred.username);
-                        
-                        var superAdmin = new AppUser
-                        {
-                            UserName = cred.username,
-                            Email = cred.email,
-                            EmailConfirmed = true,
-                            PhoneNumber = cred.phone,
-                            FullName = cred.fullName,
-                            Address = await _context.Companies
-                                .Where(c => c.Id == cred.companyId)
-                                .Select(c => c.Address)
-                                .FirstOrDefaultAsync() ?? string.Empty,
-                            DateOfBirth = cred.dob,
-                            UserType = UserType.SuperAdmin,
-                            DateCreated = DateTime.UtcNow.AddMonths(-6)
-                        };
-
-                        var result = await _userManager.CreateAsync(superAdmin, password);
-                        if (result.Succeeded)
-                        {
-                            await _userManager.AddToRoleAsync(superAdmin, "SuperAdmin");
-
-                            // Create SuperAdmin entity
-                            var superAdminEntity = new SuperAdmin
-                            {
-                                Id = superAdmin.Id,
-                                CompanyId = cred.companyId,
-                                AppUser = superAdmin
-                            };
-
-                            await _context.SuperAdmins.AddAsync(superAdminEntity);
-                            await _context.SaveChangesAsync();
-
-                            // Update Company with SuperAdmin
-                            var company = await _context.Companies.FindAsync(cred.companyId);
-                            if (company != null)
-                            {
-                                company.SuperAdmin = superAdminEntity;
-                                await _context.SaveChangesAsync();
-                            }
-                            
-                            _logger.LogInformation("Super admin {Username} created successfully", cred.username);
-                        }
-                        else
-                        {
-                            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                            _logger.LogWarning("Failed to create super admin {Username}: {Errors}", cred.username, errors);
-                        }
-                    }
-                }
+                companies = await _context.Companies.ToListAsync();
             }
             else
             {
-                _logger.LogInformation("Companies and super admins already exist, skipping seed");
+                _logger.LogInformation("Companies already exist. Ensuring super admins are seeded...");
+            }
+
+            _logger.LogInformation("Ensuring super admins for seeded companies...");
+
+            var superAdminCredentials = new List<(string username, string email, string fullName, string phone, DateTime dob, string companyEmail)>
+            {
+                ("karim_superadmin", "karim@cairotransit.com", "Karim Hassan", "+20123456789", new DateTime(1980, 3, 15), "info@cairotransit.com"),
+                ("nour_superadmin", "nour@alexrides.com", "Nour Ahmed", "+20123456790", new DateTime(1979, 7, 22), "contact@alexrides.com"),
+                ("amr_superadmin", "amr@deltatransport.com", "Amr Mahmoud", "+20123456791", new DateTime(1982, 5, 10), "info@deltatransport.com"),
+                ("heba_superadmin", "heba@luxortravels.com", "Heba Ali", "+20123456792", new DateTime(1981, 9, 18), "support@luxortravels.com"),
+                ("salem_superadmin", "salem@redseamobility.com", "Salem Mostafa", "+20123456793", new DateTime(1978, 11, 25), "info@redseamobility.com")
+            };
+
+            foreach (var cred in superAdminCredentials)
+            {
+                var company = companies.FirstOrDefault(c =>
+                    string.Equals(c.Email, cred.companyEmail, StringComparison.OrdinalIgnoreCase));
+
+                if (company == null)
+                {
+                    _logger.LogWarning("Skipping super admin {Username}: company with email {CompanyEmail} not found", cred.username, cred.companyEmail);
+                    continue;
+                }
+
+                var existingSuperAdminEntity = await _context.SuperAdmins
+                    .FirstOrDefaultAsync(s => s.CompanyId == company.Id);
+
+                if (existingSuperAdminEntity != null)
+                {
+                    continue;
+                }
+
+                var superAdminUser = await _userManager.FindByNameAsync(cred.username);
+
+                if (superAdminUser == null)
+                {
+                    _logger.LogInformation("Creating super admin user: {Username}", cred.username);
+
+                    superAdminUser = new AppUser
+                    {
+                        UserName = cred.username,
+                        Email = cred.email,
+                        EmailConfirmed = true,
+                        PhoneNumber = cred.phone,
+                        FullName = cred.fullName,
+                        Address = company.Address,
+                        DateOfBirth = cred.dob,
+                        UserType = UserType.SuperAdmin,
+                        DateCreated = DateTime.UtcNow.AddMonths(-6)
+                    };
+
+                    var result = await _userManager.CreateAsync(superAdminUser, password);
+                    if (!result.Succeeded)
+                    {
+                        var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                        _logger.LogWarning("Failed to create super admin {Username}: {Errors}", cred.username, errors);
+                        continue;
+                    }
+                }
+
+                if (!await _userManager.IsInRoleAsync(superAdminUser, "SuperAdmin"))
+                {
+                    await _userManager.AddToRoleAsync(superAdminUser, "SuperAdmin");
+                }
+
+                var superAdminEntity = new SuperAdmin
+                {
+                    Id = superAdminUser.Id,
+                    CompanyId = company.Id,
+                    AppUser = superAdminUser
+                };
+
+                await _context.SuperAdmins.AddAsync(superAdminEntity);
+                await _context.SaveChangesAsync();
+
+                company.SuperAdmin = superAdminEntity;
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Super admin {Username} created and linked to company {CompanyName}", cred.username, company.Name);
             }
         }
 
@@ -392,6 +407,10 @@ namespace Infrastructure.Data.DataSeed
                                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
                                 _logger.LogWarning("Failed to create admin {Username}: {Errors}", cred.username, errors);
                             }
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Skipping admin {Username}: no SuperAdmin linked to company {CompanyId}", cred.username, cred.companyId);
                         }
                     }
                 }

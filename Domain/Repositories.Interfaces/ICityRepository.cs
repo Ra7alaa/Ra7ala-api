@@ -11,7 +11,7 @@ namespace Domain.Repositories.Interfaces
     {
         Task<IEnumerable<City>> GetCitiesByGovernorateAsync(string governorate);
         Task<IEnumerable<City>> AddCitiesAndReturnThemAsync(IEnumerable<City> cities);
-        Task<City> GetByIdWithStationsAsync(int id);
+        Task<City?> GetByIdWithStationsAsync(int id);
         Task<IEnumerable<City>> GetAllWithStationsAsync();
     }
 }

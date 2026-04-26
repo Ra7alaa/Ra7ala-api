@@ -26,5 +26,6 @@ namespace Domain.Repositories.Interfaces
         IGenericRepository<TripStation> TripStations { get; }
 
         Task<int> SaveChangesAsync();
+        Task<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction> BeginTransactionAsync();
     }
 }

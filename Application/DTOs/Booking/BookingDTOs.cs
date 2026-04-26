@@ -41,6 +41,7 @@ namespace Application.DTOs.Booking
         public BookingStatus Status { get; set; }
         public bool IsPaid { get; set; }
         public int NumberOfTickets { get; set; }
+        public string? PaymentIntentId { get; set; }
         public List<TicketDto> Tickets { get; set; } = new List<TicketDto>();
     }
     

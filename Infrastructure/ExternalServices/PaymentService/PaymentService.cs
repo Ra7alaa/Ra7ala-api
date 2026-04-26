@@ -1,4 +1,4 @@
-using Application.DTOs.Payment;
+﻿﻿﻿﻿using Application.DTOs.Payment;
 using Application.Models;
 using Application.Services.Interfaces;
 using Domain.Entities;
@@ -7,7 +7,6 @@ using Domain.Repositories.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Stripe;
-using System.Text.Json;
 
 namespace Infrastructure.ExternalServices.PaymentService
 {
@@ -54,15 +53,18 @@ namespace Infrastructure.ExternalServices.PaymentService
                     return ServiceResult<PaymentIntentResponseDto>.Failure("Booking is already paid");
                 }
 
-                if (booking.Status != BookingStatus.Confirmed)
+                if (booking.Status == BookingStatus.Cancelled)
                 {
-                    return ServiceResult<PaymentIntentResponseDto>.Failure("Booking must be confirmed before payment");
+                    return ServiceResult<PaymentIntentResponseDto>.Failure("Cannot process payment for a cancelled booking");
                 }
+
+                // Always enforce amount from booking on server side.
+                var amountToCharge = booking.TotalPrice;
 
                 // Create payment intent with Stripe
                 var options = new PaymentIntentCreateOptions
                 {
-                    Amount = (long)(createDto.Amount * 100), // Convert to cents
+                    Amount = (long)(amountToCharge * 100), // Convert to cents
                     Currency = createDto.Currency.ToLower(),
                     Description = createDto.Description ?? $"Payment for booking #{createDto.BookingId}",
                     AutomaticPaymentMethods = new PaymentIntentAutomaticPaymentMethodsOptions
@@ -90,7 +92,7 @@ namespace Infrastructure.ExternalServices.PaymentService
                 {
                     ClientSecret = paymentIntent.ClientSecret,
                     PaymentIntentId = paymentIntent.Id,
-                    Amount = createDto.Amount,
+                    Amount = amountToCharge,
                     Currency = createDto.Currency,
                     Status = paymentIntent.Status,
                     BookingId = createDto.BookingId
@@ -148,23 +150,43 @@ namespace Infrastructure.ExternalServices.PaymentService
                 // Check payment status
                 if (paymentIntent.Status == "succeeded")
                 {
-                    // Update booking and generate tickets
-                    var updateResult = await UpdateBookingAfterPaymentAsync(confirmationDto.BookingId, paymentIntent.Id);
-                    if (!updateResult.IsSuccess)
+                    // Wrap update + ticket generation in one atomic transaction
+                    await using var transaction = await _unitOfWork.BeginTransactionAsync();
+                    try
                     {
+                        // Update booking status
+                        var updateResult = await UpdateBookingAfterPaymentAsync(confirmationDto.BookingId, paymentIntent.Id);
+                        if (!updateResult.IsSuccess)
+                        {
+                            await transaction.RollbackAsync();
+                            result.IsSuccess = false;
+                            result.ErrorMessage = string.Join(", ", updateResult.Errors);
+                            return ServiceResult<PaymentResultDto>.Success(result);
+                        }
+
+                        // Generate tickets
+                        var ticketsResult = await GenerateTicketsAsync(confirmationDto.BookingId);
+                        if (!ticketsResult.IsSuccess)
+                        {
+                            await transaction.RollbackAsync();
+                            result.IsSuccess = false;
+                            result.ErrorMessage = string.Join(", ", ticketsResult.Errors);
+                            return ServiceResult<PaymentResultDto>.Success(result);
+                        }
+
+                        await transaction.CommitAsync();
+                        result.TicketIds = ticketsResult.Data ?? new List<int>();
+                        result.IsSuccess = true;
+                        _logger.LogInformation("Payment confirmed successfully for booking {BookingId}", confirmationDto.BookingId);
+                    }
+                    catch (Exception txEx)
+                    {
+                        await transaction.RollbackAsync();
+                        _logger.LogError(txEx, "Transaction rolled back for booking {BookingId}", confirmationDto.BookingId);
                         result.IsSuccess = false;
-                        result.ErrorMessage = string.Join(", ", updateResult.Errors);
+                        result.ErrorMessage = "An internal error rolled back the payment confirmation. Please contact support.";
                         return ServiceResult<PaymentResultDto>.Success(result);
                     }
-
-                    var ticketsResult = await GenerateTicketsAsync(confirmationDto.BookingId);
-                    if (ticketsResult.IsSuccess)
-                    {
-                        result.TicketIds = ticketsResult.Data ?? new List<int>();
-                    }
-
-                    result.IsSuccess = true;
-                    _logger.LogInformation("Payment confirmed successfully for booking {BookingId}", confirmationDto.BookingId);
                 }
                 else
                 {
@@ -301,6 +323,12 @@ namespace Infrastructure.ExternalServices.PaymentService
                     case "payment_intent.payment_failed":
                         await HandlePaymentFailedAsync(stripeEvent);
                         break;
+                    case "payment_intent.canceled":
+                        await HandlePaymentCanceledAsync(stripeEvent);
+                        break;
+                    case "charge.refunded":
+                        _logger.LogInformation("Charge refunded webhook received");
+                        break;
                     default:
                         _logger.LogInformation("Unhandled webhook event type: {EventType}", stripeEvent.Type);
                         break;
@@ -330,8 +358,18 @@ namespace Infrastructure.ExternalServices.PaymentService
                     return ServiceResult.Failure("Booking not found");
                 }
 
+                if (booking.IsPaid &&
+                    booking.Status == BookingStatus.Confirmed &&
+                    booking.PaymentIntentId == paymentIntentId)
+                {
+                    _logger.LogInformation("Booking {BookingId} is already marked paid with payment {PaymentIntentId}",
+                        bookingId, paymentIntentId);
+                    return ServiceResult.Success();
+                }
+
                 booking.IsPaid = true;
                 booking.Status = BookingStatus.Confirmed;
+                booking.PaymentIntentId = paymentIntentId;
                 
                 _bookingRepository.Update(booking);
                 await _unitOfWork.SaveChangesAsync();
@@ -358,27 +396,41 @@ namespace Infrastructure.ExternalServices.PaymentService
                     return ServiceResult<List<int>>.Failure("Booking not found");
                 }
 
-                var ticketIds = new List<int>();
+                if (booking.Tickets.Any())
+                {
+                    _logger.LogInformation("Booking {BookingId} already has {Count} ticket(s). Skipping regeneration.",
+                        bookingId, booking.Tickets.Count);
+                    return ServiceResult<List<int>>.Success(booking.Tickets.Select(t => t.Id).ToList());
+                }
+
+                var generatedTickets = new List<Ticket>();
+
+                // Get the next available seat number for this trip (thread-safe sequential assignment)
+                var nextSeatNumber = (await _ticketRepository.GetMaxSeatNumberForTripAsync(booking.TripId) ?? 0) + 1;
 
                 for (int i = 0; i < booking.NumberOfTickets; i++)
                 {
+                    var ticketCode = await GenerateUniqueTicketCodeAsync();
+
                     var ticket = new Ticket
                     {
                         BookingId = bookingId,
                         TripId = booking.TripId,
                         PassengerId = booking.PassengerId,
-                        TicketCode = GenerateTicketNumber(),
+                        TicketCode = ticketCode,
                         PurchaseDate = DateTime.UtcNow,
                         IsUsed = false,
-                        SeatNumber = null, // Can be assigned later
+                        SeatNumber = nextSeatNumber + i, // Sequential seat assignment
                         Price = booking.TotalPrice / booking.NumberOfTickets
                     };
 
                     await _ticketRepository.AddAsync(ticket);
-                    ticketIds.Add(ticket.Id);
+                    generatedTickets.Add(ticket);
                 }
 
                 await _unitOfWork.SaveChangesAsync();
+
+                var ticketIds = generatedTickets.Select(t => t.Id).ToList();
 
                 _logger.LogInformation("Generated {Count} tickets for booking {BookingId}", 
                     booking.NumberOfTickets, bookingId);
@@ -437,9 +489,52 @@ namespace Infrastructure.ExternalServices.PaymentService
             }
         }
 
-        private string GenerateTicketNumber()
+        private async Task HandlePaymentCanceledAsync(Event stripeEvent)
         {
-            return $"TKT{DateTime.UtcNow:yyyyMMddHHmmss}{Random.Shared.Next(1000, 9999)}";
+            try
+            {
+                var paymentIntent = stripeEvent.Data.Object as PaymentIntent;
+                if (paymentIntent?.Metadata.TryGetValue("booking_id", out var bookingIdStr) == true &&
+                    int.TryParse(bookingIdStr, out var bookingId))
+                {
+                    var booking = await _bookingRepository.GetByIdAsync(bookingId);
+                    if (booking != null && booking.Status != BookingStatus.Cancelled)
+                    {
+                        booking.Status = BookingStatus.Cancelled;
+                        _bookingRepository.Update(booking);
+                        await _unitOfWork.SaveChangesAsync();
+                    }
+
+                    _logger.LogInformation("Payment canceled webhook processed for booking {BookingId}", bookingId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error handling payment canceled webhook");
+            }
+        }
+
+        private async Task<string> GenerateUniqueTicketCodeAsync()
+        {
+            // 6-char alphanumeric: ~2.17 billion combos vs 9000 for old 4-digit approach
+            const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+            const int codeLength = 6;
+            const int maxAttempts = 30;
+
+            for (int attempt = 0; attempt < maxAttempts; attempt++)
+            {
+                var codeChars = new char[codeLength];
+                for (int i = 0; i < codeLength; i++)
+                    codeChars[i] = chars[Random.Shared.Next(chars.Length)];
+                var code = new string(codeChars);
+
+                var existing = await _ticketRepository.GetTicketByCodeAsync(code);
+                if (existing == null)
+                    return code;
+            }
+
+            // Fallback: timestamp-based hex to guarantee uniqueness
+            return DateTime.UtcNow.Ticks.ToString("X").Substring(5, 6).ToUpper();
         }
     }
 }

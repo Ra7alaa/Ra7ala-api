@@ -75,6 +75,7 @@ namespace Application.Services
                     RejectionReason = string.Empty,
                     SuperAdminName = createDto.SuperAdminName.Trim(),
                     SuperAdminEmail = createDto.SuperAdminEmail.Trim().ToLower(),
+                    SuperAdminUserName = createDto.SuperAdminUserName.Trim(),
                     SuperAdminPhone = createDto.SuperAdminPhone,
                     CreatedDate = DateTime.UtcNow,
                     AverageRating = 0,
@@ -225,9 +226,15 @@ namespace Application.Services
         public async Task<CompanyUserProfileDto> GetCompanyUserProfileAsync(int companyId)
         {
             var company = await _unitOfWork.CompanyRepository.GetCompanyByIdAsync(companyId);
-            var averageRating = await GetCompanyAverageRatingAsync(companyId);
-            if (company == null)
-                throw new KeyNotFoundException($"Company with ID {companyId} not found");
+            if (company == null || company.Status != CompanyStatus.Approved.ToString())
+                throw new KeyNotFoundException($"Company with ID {companyId} not found or not approved");
+
+            var averageRating = 0;
+            try {
+                averageRating = await GetCompanyAverageRatingAsync(companyId);
+            } catch {
+                // If rating fails, just default to 0 for public profile
+            }
 
             return new CompanyUserProfileDto
             {
@@ -308,6 +315,7 @@ namespace Application.Services
                 {
                     FullName = company.SuperAdminName,
                     Email = company.SuperAdminEmail,
+                    UserName = company.SuperAdminUserName,
                     PhoneNumber = company.SuperAdminPhone,
                     CompanyId = company.Id
                 };

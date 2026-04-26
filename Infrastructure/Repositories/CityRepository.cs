@@ -44,7 +44,7 @@ namespace Infrastructure.Repositories
         }
 
         // تنفيذ الطرق الجديدة للحصول على المدن مع المحطات
-        public async Task<City> GetByIdWithStationsAsync(int id)
+        public async Task<City?> GetByIdWithStationsAsync(int id)
         {
             return await _context.Cities
                 .Include(c => c.Stations.Where(s => !s.IsDeleted))

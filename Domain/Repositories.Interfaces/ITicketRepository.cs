@@ -7,8 +7,10 @@ namespace Domain.Repositories.Interfaces
 {
     public interface ITicketRepository : IGenericRepository<Ticket>
     {
-        Task<Ticket> GetTicketByCodeAsync(string ticketCode);
+        Task<Ticket?> GetTicketByCodeAsync(string ticketCode);
         Task<PaginatedTicketsResult> GetPaginatedTicketsByPassengerIdAsync(string passengerId, int pageNumber, int pageSize);
+        /// <summary>Returns the highest assigned SeatNumber for the given trip, or null when none exist yet.</summary>
+        Task<int?> GetMaxSeatNumberForTripAsync(int tripId);
     }
     
     public class PaginatedTicketsResult

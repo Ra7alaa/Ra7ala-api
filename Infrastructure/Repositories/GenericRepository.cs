@@ -31,7 +31,7 @@ namespace Infrastructure.Repositories
             return await query.ToListAsync();
         }
 
-        public async Task<T> GetByIdAsync(int id)
+        public async Task<T?> GetByIdAsync(int id)
         {
             var query = _dbSet.AsQueryable();
             if (HasIsDeletedProperty())

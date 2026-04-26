@@ -14,7 +14,7 @@ namespace Infrastructure.Repositories
         {
         }
 
-        public async Task<Route> GetRouteByIdWithDetailsAsync(int routeId)
+        public async Task<Route?> GetRouteByIdWithDetailsAsync(int routeId)
         {
             return await _dbSet
                 .Include(r => r.Company)
@@ -23,7 +23,7 @@ namespace Infrastructure.Repositories
                 .Include(r => r.RouteStations)
                     .ThenInclude(rs => rs.Station)
                         .ThenInclude(s => s.City)
-                .FirstOrDefaultAsync(r => r.Id == routeId && !r.IsDeleted);
+                .FirstOrDefaultAsync(r => r.Id == routeId && !r.IsDeleted && r.Company.Status == "Approved");
         }
 
         public async Task<List<Route>> GetRoutesByCompanyIdAsync(int companyId)
@@ -35,7 +35,7 @@ namespace Infrastructure.Repositories
                 .Include(r => r.RouteStations)
                     .ThenInclude(rs => rs.Station)
                         .ThenInclude(s => s.City)
-                .Where(r => r.CompanyId == companyId && !r.IsDeleted)
+                .Where(r => r.CompanyId == companyId && !r.IsDeleted && r.Company.Status == "Approved")
                 .ToListAsync();
         }
 
@@ -48,7 +48,7 @@ namespace Infrastructure.Repositories
                 .Include(r => r.RouteStations)
                     .ThenInclude(rs => rs.Station)
                         .ThenInclude(s => s.City)
-                .Where(r => r.CompanyId == companyId && !r.IsDeleted);
+                .Where(r => r.CompanyId == companyId && !r.IsDeleted && r.Company.Status == "Approved");
 
             var totalCount = await query.CountAsync();
             var routes = await query
